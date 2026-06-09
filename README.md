@@ -17,15 +17,14 @@ All theory operations are handled by a local Python engine (`chordgen`) that run
 
 ## Setup
 
-### 1. Clone and install
+### 1. Clone
 
 ```bash
 git clone https://github.com/saarsena/composition-aide
 cd composition-aide
-npm install
 ```
 
-> `package.json` references the SDK packages via local `file:` paths relative to the Extensions SDK root. If you placed the SDK elsewhere, update those paths in `package.json` before running `npm install`.
+No build step required — `dist/extension.js` is pre-built and included.
 
 ### 2. Configure environment
 
@@ -33,7 +32,7 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env` and set `EXTENSION_HOST_PATH` to the path of `ExtensionHostNodeModule.node` from your Extensions SDK installation. That is the only required variable — the Python engine path defaults to the `engine/` directory bundled in this repo.
+Edit `.env` and set `EXTENSION_HOST_PATH` to the path of `ExtensionHostNodeModule.node` from your Ableton Extensions SDK installation. That is the only required variable.
 
 Optional overrides:
 
@@ -42,11 +41,22 @@ Optional overrides:
 | `COMPOSITION_AIDE_PATH` | `engine/` (in repo) | Override the Python engine directory |
 | `PYTHON_CMD` | `python` | Use `python3` or a virtualenv path |
 
-### 3. Build and run
+### 3. Run
 
 ```bash
-npm run build   # TypeScript compile + bundle
-npm start       # bundle + launch in Live via extensions-cli
+extensions-cli run
+```
+
+**Requirements:** Python 3.9+ must be in your PATH. No Node.js, no `npm install`, no build step.
+
+---
+
+### For contributors / development
+
+```bash
+npm install     # requires the Extensions SDK .tgz packages (see package.json)
+npm run build   # TypeScript compile + bundle → dist/extension.js
+npm start       # build + run
 ```
 
 ---
