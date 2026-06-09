@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+  const isWebKit = window.webkit?.messageHandlers?.live;
+  const isWebView2 = window.chrome?.webview;
+  function closeWithResult(result) {
+    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
+    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
+    else if (isWebView2) window.chrome.webview.postMessage(msg);
+  }
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  header {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+  }
+  header h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+  header p { font-size: 11px; color: #888; margin-top: 3px; }
+  .list-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 0 8px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-size: 11px;
+    color: #666;
+    text-align: left;
+    padding: 6px 8px 5px;
+    border-bottom: 1px solid #2a2a2a;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    position: sticky;
+    top: 0;
+    background: #1e1e1e;
+    z-index: 1;
+  }
+  tbody tr { border-bottom: 1px solid #252525; }
+  tbody tr:hover { background: #252525; }
+  tbody td { padding: 5px 8px; vertical-align: middle; }
+  .swatch {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .key-cell { display: flex; align-items: center; }
+  .compat-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .badge-same    { background: #1f4d2a; color: #7ec87e; }
+  .badge-rel     { background: #1a3d4d; color: #7ec8e3; }
+  .badge-dom     { background: #4d3a1a; color: #e3b87e; }
+  .badge-sub     { background: #3a1a4d; color: #c87ee3; }
+  .badge-par     { background: #2a2a2a; color: #aaa; }
+  .track-name    { font-size: 11px; color: #777; }
+
+  /* Section dividers */
+  .section-header {
+    font-size: 10px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    padding: 10px 8px 4px;
+    border-top: 1px solid #2a2a2a;
+    margin-top: 4px;
+  }
+  .section-header:first-child { border-top: none; margin-top: 0; }
+
+  /* Progression suggestions */
+  .sugg-table tbody td { padding: 5px 8px; }
+  .template-cell {
+    font-size: 11px;
+    color: #777;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .chords-cell {
+    font-size: 12px;
+    color: #bbb;
+    letter-spacing: 0.02em;
+  }
+
+  .empty {
+    color: #555;
+    text-align: center;
+    padding: 20px 16px 4px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  footer {
+    padding: 8px 16px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+  button.close-btn {
+    padding: 5px 18px;
+    background: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #ccc;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.close-btn:hover { background: #4a4a4a; }
+  button.write-btn {
+    padding: 2px 8px;
+    background: #1f3a1f;
+    border: 1px solid #3a6b3a;
+    border-radius: 3px;
+    color: #7ec87e;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button.write-btn:hover { background: #2a4f2a; border-color: #5a9e5a; }
+</style>
+</head>
+<body>
+<header>
+  <h2 id="title">Compatible Clips</h2>
+  <p id="subtitle"></p>
+</header>
+<div class="list-wrap" id="listWrap"></div>
+<footer>
+  <button class="close-btn" id="closeBtn">Close</button>
+</footer>
+<script>
+  const data = __COMPATIBLE_JSON__;
+
+  document.getElementById("title").textContent =
+    `Compatible — ${data.refClipName}`;
+  document.getElementById("subtitle").textContent =
+    `Reference key: ${data.refKey}  ·  ${data.results.length} clip${data.results.length !== 1 ? "s" : ""}  ·  ${data.suggestions.length} progression${data.suggestions.length !== 1 ? "s" : ""}`;
+
+  function badgeClass(compat) {
+    if (compat === "Same key") return "badge-same";
+    if (compat.startsWith("Relative")) return "badge-rel";
+    if (compat.startsWith("Dominant") || compat.startsWith("Subdominant")) return "badge-dom";
+    if (compat.startsWith("Parallel")) return "badge-par";
+    return "badge-sub";
+  }
+
+  function colorToCSS(n) {
+    const r = (n >> 16) & 0xff;
+    const g = (n >> 8) & 0xff;
+    const b = n & 0xff;
+    return `rgb(${r},${g},${b})`;
+  }
+
+  const wrap = document.getElementById("listWrap");
+
+  // ── Compatible clips ──────────────────────────────────────────────────────
+
+  const clipsHeader = document.createElement("div");
+  clipsHeader.className = "section-header section-header:first-child";
+  clipsHeader.style.borderTop = "none";
+  clipsHeader.textContent = "Compatible Clips";
+  wrap.appendChild(clipsHeader);
+
+  if (data.results.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "No harmonically compatible clips found in session.";
+    wrap.appendChild(empty);
+  } else {
+    const table = document.createElement("table");
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Clip</th>
+          <th>Track</th>
+          <th>Key</th>
+          <th>Relationship</th>
+        </tr>
+      </thead>
+      <tbody id="clipBody"></tbody>
+    `;
+    wrap.appendChild(table);
+    const tbody = document.getElementById("clipBody");
+    for (const clip of data.results) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${clip.clipName}</td>
+        <td class="track-name">${clip.trackName}</td>
+        <td>
+          <div class="key-cell">
+            <span class="swatch" style="background:${colorToCSS(clip.color)}"></span>
+            ${clip.key}
+          </div>
+        </td>
+        <td>
+          <span class="compat-badge ${badgeClass(clip.compatibility)}">${clip.compatibility}</span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ── Compatible progressions ───────────────────────────────────────────────
+
+  if (data.suggestions && data.suggestions.length > 0) {
+    const suggHeader = document.createElement("div");
+    suggHeader.className = "section-header";
+    suggHeader.textContent = "Compatible Progressions";
+    wrap.appendChild(suggHeader);
+
+    const suggTable = document.createElement("table");
+    suggTable.className = "sugg-table";
+    suggTable.innerHTML = `<tbody id="suggBody"></tbody>`;
+    wrap.appendChild(suggTable);
+
+    const suggBody = document.getElementById("suggBody");
+    data.suggestions.forEach((s, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="compat-badge ${badgeClass(s.relationship)}">${s.relationship}</span></td>
+        <td>
+          <div class="key-cell">
+            <span class="swatch" style="background:${colorToCSS(s.color)}"></span>
+            ${s.keyLabel}
+          </div>
+        </td>
+        <td class="template-cell">${s.template}</td>
+        <td class="chords-cell">${s.chords.join(" · ")}</td>
+        <td><button class="write-btn" data-idx="${idx}">Write →</button></td>
+      `;
+      suggBody.appendChild(tr);
+    });
+
+    suggBody.addEventListener("click", e => {
+      const btn = e.target.closest(".write-btn");
+      if (!btn) return;
+      const s = data.suggestions[+btn.dataset.idx];
+      closeWithResult({ action: "writeProgression", suggestion: s });
+    });
+  }
+
+  document.getElementById("closeBtn").addEventListener("click", () => closeWithResult(null));
+</script>
+</body>
+</html>

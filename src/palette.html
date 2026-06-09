@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chord Palette</title>
+  <script>
+    const DATA = __PALETTE_JSON__;
+    // DATA = { keyRoot, keyName, defaultScale, scaleOptions, scales }
+
+    const isWebKit = window.webkit?.messageHandlers?.live;
+    const isWebView2 = window.chrome?.webview;
+
+    function closeWithResult(result) {
+      const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
+      if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
+      else if (isWebView2) window.chrome.webview.postMessage(msg);
+    }
+
+    const ROMAN_BASE = ['I','II','III','IV','V','VI','VII'];
+
+    function scaleDegrees(pitchClasses, keyRoot, intervals) {
+      return pitchClasses
+        .map(pc => {
+          const rel = (pc - keyRoot + 12) % 12;
+          const idx = intervals.indexOf(rel);
+          return idx >= 0 ? String(idx + 1) : null;
+        })
+        .filter(Boolean)
+        .filter((d, i, arr) => arr.indexOf(d) === i);
+    }
+
+    function romanForChord(chord, index) {
+      const base = ROMAN_BASE[index] ?? '?';
+      const q = chord.quality;
+      const isMinor = q === 'minor' || q === 'minor7' || q === 'minor9'
+                   || q === 'half_diminished' || q === 'minor_major7';
+      const isDim = q === 'diminished' || q === 'diminished7';
+      const isHalfDim = q === 'half_diminished';
+      const roman = (isMinor || isDim || isHalfDim) ? base.toLowerCase() : base;
+      if (isHalfDim) return roman + 'ø';
+      if (isDim) return roman + '°';
+      return roman;
+    }
+
+    let selectedIndex = null;
+    let useSevenths = false;
+    let currentScale = DATA.defaultScale;
+
+    function currentChords() {
+      const scaleData = DATA.scales[currentScale];
+      return (useSevenths ? scaleData?.sevenths : scaleData?.triads) ?? [];
+    }
+
+    function renderChords() {
+      const container = document.getElementById('chord-row');
+      const chords = currentChords();
+      const scaleData = DATA.scales[currentScale];
+      const intervals = scaleData?.intervals ?? [];
+      // Dynamic column count to fill available space cleanly
+      container.style.gridTemplateColumns = `repeat(${Math.max(chords.length, 1)}, 1fr)`;
+      container.innerHTML = '';
+      chords.forEach((chord, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'chord-btn' + (i === selectedIndex ? ' selected' : '');
+        btn.dataset.index = String(i);
+        const degs = scaleDegrees(chord.pitch_classes ?? [], DATA.keyRoot, intervals);
+        const degsHtml = degs.length > 0
+          ? `<span class="degrees">${degs.join('·')}</span>`
+          : '';
+        btn.innerHTML =
+          `<span class="roman">${romanForChord(chord, i)}</span>` +
+          `<span class="cname">${chord.name}</span>` +
+          degsHtml;
+        btn.addEventListener('click', () => selectChord(i));
+        container.appendChild(btn);
+      });
+    }
+
+    function selectChord(i) {
+      selectedIndex = i;
+      renderChords();
+      document.getElementById('insert-btn').disabled = false;
+    }
+
+    function setTab(sevenths) {
+      useSevenths = sevenths;
+      selectedIndex = null;
+      document.getElementById('insert-btn').disabled = true;
+      document.getElementById('tab-triads').classList.toggle('active', !sevenths);
+      document.getElementById('tab-sevenths').classList.toggle('active', sevenths);
+      renderChords();
+    }
+
+    function setScale(scaleId) {
+      currentScale = scaleId;
+      selectedIndex = null;
+      document.getElementById('insert-btn').disabled = true;
+      const opt = DATA.scaleOptions.find(o => o.id === scaleId);
+      document.getElementById('key-label').textContent = `${DATA.keyName} ${opt?.label ?? scaleId}`;
+      renderChords();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Populate scale selector
+      const scaleSel = document.getElementById('scale-select');
+      DATA.scaleOptions.forEach(opt => {
+        const el = document.createElement('option');
+        el.value = opt.id;
+        el.textContent = opt.label;
+        if (opt.id === DATA.defaultScale) el.selected = true;
+        scaleSel.appendChild(el);
+      });
+
+      // Initial key label
+      const defOpt = DATA.scaleOptions.find(o => o.id === DATA.defaultScale);
+      document.getElementById('key-label').textContent =
+        `${DATA.keyName} ${defOpt?.label ?? DATA.defaultScale}`;
+
+      scaleSel.addEventListener('change', () => setScale(scaleSel.value));
+
+      renderChords();
+
+      document.getElementById('insert-btn').addEventListener('click', () => {
+        if (selectedIndex === null) return;
+        const chord = currentChords()[selectedIndex];
+        if (!chord) return;
+        closeWithResult({
+          action: 'insert',
+          chordName: chord.name,
+          length: parseFloat(document.getElementById('length-select').value),
+          voicing: document.getElementById('voicing-select').value,
+          octave: parseInt(document.getElementById('octave-select').value),
+          selectedScale: currentScale,
+        });
+      });
+
+      document.getElementById('cancel-btn').addEventListener('click', () => closeWithResult(null));
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWithResult(null); });
+    });
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    * { margin: 0; }
+    button, select, option { font: inherit; }
+
+    :root {
+      --c-bg:         hsl(0,0%,21%);
+      --c-input-bg:   hsl(0,0%,12%);
+      --c-text:       hsl(0,0%,71%);
+      --c-text-dim:   hsl(0,0%,41%);
+      --c-border:     hsl(0,0%,10%);
+      --c-accent:     hsl(31,100%,67%);
+      --c-accent-fg:  hsl(0,0%,7%);
+      --c-control-bg: hsl(0,0%,16%);
+      --c-hover:      hsl(0,0%,14%);
+    }
+
+    html {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: "AbletonSansSmall", sans-serif;
+      font-size: 11.5px;
+      font-weight: 500;
+      -webkit-font-smoothing: antialiased;
+      height: 100%;
+    }
+
+    body {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 1em 1.2em 0.85em;
+      gap: 0.75em;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.7em;
+    }
+    .title { color: var(--c-text-dim); }
+    #key-label { color: var(--c-accent); font-size: 1.3em; font-weight: 600; }
+
+    /* ── Scale selector row ── */
+    .scale-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .scale-row label {
+      color: var(--c-text-dim);
+      font-size: 0.95em;
+      white-space: nowrap;
+    }
+    #scale-select {
+      flex: 1;
+      background: var(--c-input-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 0.4em;
+      cursor: pointer;
+    }
+    #scale-select:focus { outline: 1px solid var(--c-text-dim); }
+
+    /* ── Tabs ── */
+    .tab-row { display: flex; gap: 0.3em; }
+    .tab {
+      background: var(--c-control-bg);
+      color: var(--c-text-dim);
+      border: 1px solid var(--c-border);
+      height: 18px;
+      padding: 0 0.9em;
+      border-radius: 1em;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tab.active {
+      background: var(--c-input-bg);
+      color: var(--c-text);
+      border-color: var(--c-text-dim);
+    }
+    .tab:hover { color: var(--c-text); }
+
+    /* ── Chord buttons ── */
+    #chord-row {
+      display: grid;
+      gap: 0.35em;
+      flex-shrink: 0;
+    }
+
+    .chord-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2em;
+      background: var(--c-input-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      padding: 0.5em 0.3em 0.45em;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.08s;
+    }
+    .chord-btn:hover { background: var(--c-hover); }
+    .chord-btn.selected {
+      border-color: var(--c-accent);
+      background: hsl(31 100% 67% / 0.12);
+    }
+    .roman { color: var(--c-accent); font-size: 0.9em; line-height: 1; }
+    .cname { font-size: 1.05em; line-height: 1; }
+    .degrees { color: var(--c-text-dim); font-size: 0.78em; letter-spacing: 0.06em; }
+
+    /* ── Options row ── */
+    .options-row {
+      display: flex;
+      gap: 1.2em;
+      align-items: center;
+    }
+
+    .options-row label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2em;
+      color: var(--c-text-dim);
+      font-size: 0.95em;
+    }
+
+    select {
+      background: var(--c-input-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 0.4em;
+      cursor: pointer;
+      min-width: 6.5em;
+    }
+    select:focus { outline: 1px solid var(--c-text-dim); }
+
+    hr { border: none; border-top: 1px solid var(--c-border); }
+
+    /* ── Footer ── */
+    .footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5em;
+      margin-top: auto;
+    }
+
+    .btn {
+      background: var(--c-control-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 1em;
+      border-radius: 1em;
+      cursor: pointer;
+      user-select: none;
+    }
+    .btn:hover  { background: var(--c-hover); }
+    .btn:active { background: var(--c-accent); color: var(--c-accent-fg); }
+    .btn:focus  { outline: 2px solid var(--c-text-dim); }
+    .btn:disabled { opacity: 0.35; pointer-events: none; }
+
+    .btn.primary {
+      background: var(--c-accent);
+      color: var(--c-accent-fg);
+      border-color: transparent;
+    }
+    .btn.primary:hover { background: hsl(31,100%,60%); }
+    .btn.primary:disabled {
+      background: var(--c-control-bg);
+      color: var(--c-text-dim);
+      border-color: var(--c-border);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="title">Chord Palette —</span>
+    <span id="key-label"></span>
+  </div>
+
+  <div class="scale-row">
+    <label for="scale-select">Scale</label>
+    <select id="scale-select"></select>
+  </div>
+
+  <div class="tab-row">
+    <button id="tab-triads"   class="tab active" onclick="setTab(false)">Triads</button>
+    <button id="tab-sevenths" class="tab"         onclick="setTab(true)">7ths</button>
+  </div>
+
+  <div id="chord-row"></div>
+
+  <div class="options-row">
+    <label>Length
+      <select id="length-select">
+        <option value="1">1 beat</option>
+        <option value="2">2 beats</option>
+        <option value="4" selected>1 bar (4)</option>
+        <option value="8">2 bars (8)</option>
+        <option value="16">4 bars (16)</option>
+      </select>
+    </label>
+    <label>Octave
+      <select id="octave-select">
+        <option value="3">3</option>
+        <option value="4" selected>4</option>
+        <option value="5">5</option>
+      </select>
+    </label>
+    <label>Voicing
+      <select id="voicing-select">
+        <option value="close">Close</option>
+        <option value="drop2">Drop 2</option>
+        <option value="shell">Shell</option>
+      </select>
+    </label>
+  </div>
+
+  <hr />
+
+  <div class="footer">
+    <button id="cancel-btn" class="btn">Cancel</button>
+    <button id="insert-btn" class="btn primary" disabled>Insert</button>
+  </div>
+</body>
+</html>

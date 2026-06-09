@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+  const isWebKit = window.webkit?.messageHandlers?.live;
+  const isWebView2 = window.chrome?.webview;
+  function closeWithResult(result) {
+    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
+    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
+    else if (isWebView2) window.chrome.webview.postMessage(msg);
+  }
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 14px;
+    padding: 16px;
+  }
+  h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  button.adj {
+    width: 28px; height: 28px;
+    background: #3a3a3a; border: 1px solid #555;
+    border-radius: 4px; color: #d4d4d4;
+    font-size: 18px; cursor: pointer; line-height: 1;
+  }
+  button.adj:hover { background: #4a4a4a; }
+  #display {
+    width: 56px; text-align: center;
+    font-size: 20px; font-weight: 700; color: #888;
+    background: #2a2a2a; border: 1px solid #555;
+    border-radius: 4px; padding: 4px 0;
+  }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  button.preset {
+    padding: 3px 10px; background: #2a2a2a; border: 1px solid #555;
+    border-radius: 4px; color: #bbb; font-size: 11px; cursor: pointer;
+  }
+  button.preset:hover { background: #3a3a3a; color: #fff; }
+  .recolor-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: #aaa; cursor: pointer;
+  }
+  .recolor-row input { accent-color: #0e639c; cursor: pointer; }
+  .actions { display: flex; gap: 8px; }
+  button.primary {
+    padding: 6px 22px; background: #0e639c; border: none;
+    border-radius: 4px; color: #fff; font-size: 13px;
+    cursor: pointer; font-weight: 600;
+  }
+  button.primary:hover { background: #1177bb; }
+  button.cancel {
+    padding: 6px 16px; background: #3a3a3a; border: 1px solid #555;
+    border-radius: 4px; color: #ccc; font-size: 13px; cursor: pointer;
+  }
+  button.cancel:hover { background: #4a4a4a; }
+</style>
+</head>
+<body>
+<h2>Transpose Session</h2>
+<div class="row">
+  <button class="adj" id="down">−</button>
+  <div id="display">0</div>
+  <button class="adj" id="up">+</button>
+</div>
+<div class="presets">
+  <button class="preset" data-v="-12">−12</button>
+  <button class="preset" data-v="-7">−7</button>
+  <button class="preset" data-v="-5">−5</button>
+  <button class="preset" data-v="-2">−2</button>
+  <button class="preset" data-v="-1">−1</button>
+  <button class="preset" data-v="1">+1</button>
+  <button class="preset" data-v="2">+2</button>
+  <button class="preset" data-v="5">+5</button>
+  <button class="preset" data-v="7">+7</button>
+  <button class="preset" data-v="12">+12</button>
+</div>
+<label class="recolor-row">
+  <input type="checkbox" id="recolor" checked />
+  Re-color clips by key after transposing
+</label>
+<div class="actions">
+  <button class="cancel" id="cancelBtn">Cancel</button>
+  <button class="primary" id="transposeBtn">Transpose</button>
+</div>
+<script>
+  let semitones = 0;
+  const display = document.getElementById("display");
+  function update() {
+    display.textContent = semitones > 0 ? "+" + semitones : String(semitones);
+    display.style.color = semitones === 0 ? "#888" : semitones > 0 ? "#7ec8e3" : "#f28b82";
+  }
+  document.getElementById("up").addEventListener("click", () => { if (semitones < 24) { semitones++; update(); } });
+  document.getElementById("down").addEventListener("click", () => { if (semitones > -24) { semitones--; update(); } });
+  document.querySelectorAll(".preset").forEach(btn => {
+    btn.addEventListener("click", () => { semitones = parseInt(btn.dataset.v, 10); update(); });
+  });
+  document.getElementById("transposeBtn").addEventListener("click", () => {
+    const recolor = document.getElementById("recolor").checked;
+    if (semitones === 0 && !recolor) { closeWithResult(null); return; }
+    closeWithResult({ action: "transpose", semitones, recolor });
+  });
+  document.getElementById("cancelBtn").addEventListener("click", () => closeWithResult(null));
+</script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session Key Map</title>
+  <script>
+    const DATA = __SESSION_JSON__;
+    /*
+      DATA = {
+        dominantKey: string | null,
+        sceneCount: number,
+        sceneNames: string[],          // sceneCount items
+        totalMidiClips: number,
+        analyzedClips: number,
+        tracks: Array<{
+          name: string,
+          clips: Array<{               // sceneCount items, null = empty
+            clipName: string,
+            key: string | null,        // null = couldn't determine
+            score: number,
+          } | null>
+        }>
+      }
+    */
+
+    const isWebKit = window.webkit?.messageHandlers?.live;
+    const isWebView2 = window.chrome?.webview;
+
+    function closeWithResult(result) {
+      const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
+      if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
+      else if (isWebView2) window.chrome.webview.postMessage(msg);
+    }
+
+    // Circle of fifths position for each chromatic pitch class (C=0..B=11)
+    const COF = [0,7,2,9,4,11,6,1,8,3,10,5];
+    const NOTE_TO_PC = {
+      'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,
+      'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11
+    };
+
+    function keyToHue(keyLabel) {
+      if (!keyLabel) return null;
+      const m = keyLabel.match(/^([A-G][#b]?)/);
+      if (!m) return null;
+      const pc = NOTE_TO_PC[m[1]] ?? 0;
+      const cofPos = COF[pc] ?? 0;
+      return cofPos * 30;
+    }
+
+    function isMinorKey(keyLabel) {
+      if (!keyLabel) return false;
+      return /\b(minor|min|m)\b/i.test(keyLabel) || /^[a-g]/.test(keyLabel);
+    }
+
+    function cellColor(keyLabel, dominant) {
+      const hue = keyToHue(keyLabel);
+      if (hue === null) return null;
+      const minor = isMinorKey(keyLabel);
+      // Mismatch with dominant key gets a cooler, more muted treatment
+      const matchesDominant = dominant && keyLabel === dominant;
+      const sat = minor ? 55 : 70;
+      const lig = minor ? 30 : 38;
+      return `hsl(${hue}, ${sat}%, ${lig}%)`;
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function shortKey(label) {
+      if (!label) return '?';
+      // "C major" → "C" + newline + "major"; "C# minor" → "C#" + newline + "minor"
+      return label.replace(/\s+(major|minor|maj|min)/i, '\n$1');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const dom = DATA.dominantKey;
+
+      // Header
+      if (dom) {
+        const hue = keyToHue(dom);
+        const el = document.getElementById('dominant-key');
+        if (el) {
+          el.textContent = dom;
+          if (hue !== null) el.style.color = `hsl(${hue}, 80%, 65%)`;
+        }
+      } else {
+        const el = document.getElementById('dominant-key');
+        if (el) el.textContent = 'mixed';
+      }
+      const countEl = document.getElementById('clip-count');
+      if (countEl) countEl.textContent = `${DATA.analyzedClips} / ${DATA.totalMidiClips}`;
+
+      // Build grid
+      const grid = document.getElementById('grid');
+
+      // Scene header row
+      const headerRow = document.createElement('div');
+      headerRow.className = 'grid-row header-row';
+
+      const trackLabel = document.createElement('div');
+      trackLabel.className = 'cell track-label';
+      headerRow.appendChild(trackLabel);
+
+      for (let s = 0; s < DATA.sceneCount; s++) {
+        const th = document.createElement('div');
+        th.className = 'cell scene-header';
+        const name = DATA.sceneNames[s] ?? String(s + 1);
+        th.textContent = name.length > 8 ? name.slice(0, 7) + '…' : name;
+        headerRow.appendChild(th);
+      }
+      grid.appendChild(headerRow);
+
+      // Track rows
+      DATA.tracks.forEach(track => {
+        const row = document.createElement('div');
+        row.className = 'grid-row';
+
+        const tl = document.createElement('div');
+        tl.className = 'cell track-label';
+        tl.textContent = track.name.length > 12 ? track.name.slice(0, 11) + '…' : track.name;
+        row.appendChild(tl);
+
+        for (let s = 0; s < DATA.sceneCount; s++) {
+          const clipData = track.clips[s] ?? null;
+          const cell = document.createElement('div');
+          cell.className = 'cell clip-cell';
+
+          if (!clipData) {
+            cell.classList.add('empty');
+          } else if (!clipData.key) {
+            cell.classList.add('no-key');
+            const label = document.createElement('span');
+            label.className = 'key-text';
+            label.textContent = clipData.clipName ? '?' : '—';
+            cell.appendChild(label);
+          } else {
+            const bg = cellColor(clipData.key, dom);
+            if (bg) cell.style.setProperty('--cell-bg', bg);
+            cell.classList.add('has-key');
+            if (dom && clipData.key !== dom) cell.classList.add('mismatch');
+
+            const parts = shortKey(clipData.key).split('\n');
+            const root = document.createElement('span');
+            root.className = 'key-root';
+            root.textContent = parts[0] ?? '';
+            const qual = document.createElement('span');
+            qual.className = 'key-qual';
+            qual.textContent = parts[1] ?? '';
+            cell.appendChild(root);
+            cell.appendChild(qual);
+          }
+
+          row.appendChild(cell);
+        }
+
+        grid.appendChild(row);
+      });
+    });
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    * { margin: 0; }
+    button { font: inherit; }
+
+    :root {
+      --c-bg:         hsl(0,0%,21%);
+      --c-input-bg:   hsl(0,0%,12%);
+      --c-text:       hsl(0,0%,71%);
+      --c-text-dim:   hsl(0,0%,41%);
+      --c-border:     hsl(0,0%,10%);
+      --c-accent:     hsl(31,100%,67%);
+      --c-accent-fg:  hsl(0,0%,7%);
+      --c-control-bg: hsl(0,0%,16%);
+    }
+
+    html {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: "AbletonSansSmall", sans-serif;
+      font-size: 11.5px;
+      font-weight: 500;
+      -webkit-font-smoothing: antialiased;
+      height: 100%;
+    }
+
+    body {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 1em 1.2em 0.85em;
+      gap: 0.7em;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header-block {}
+    .title { color: var(--c-text-dim); font-size: 1.05em; }
+    .summary { margin-top: 0.2em; color: var(--c-text-dim); font-size: 0.95em; }
+    #dominant-key { color: var(--c-accent); }
+    .summary strong { color: var(--c-text); }
+
+    /* ── Grid ── */
+    .grid-scroll {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    #grid {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: max-content;
+    }
+
+    .grid-row {
+      display: flex;
+      gap: 2px;
+    }
+
+    .cell {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 62px;
+      height: 38px;
+      font-size: 0.9em;
+      overflow: hidden;
+    }
+
+    .track-label {
+      min-width: 80px;
+      width: 80px;
+      align-items: flex-end;
+      padding-right: 0.5em;
+      color: var(--c-text-dim);
+      font-size: 0.88em;
+      text-align: right;
+      height: auto;
+    }
+
+    .header-row .track-label { min-height: 22px; height: 22px; }
+
+    .scene-header {
+      color: var(--c-text-dim);
+      font-size: 0.88em;
+      background: var(--c-input-bg);
+      border: 1px solid var(--c-border);
+      height: 22px;
+      white-space: nowrap;
+    }
+
+    .clip-cell {
+      background: var(--c-input-bg);
+      border: 1px solid var(--c-border);
+    }
+
+    .clip-cell.empty {
+      background: transparent;
+      border: 1px solid hsl(0,0%,15%);
+    }
+
+    .clip-cell.no-key {
+      color: var(--c-text-dim);
+    }
+
+    .clip-cell.has-key {
+      background: var(--cell-bg, var(--c-input-bg));
+      border-color: transparent;
+    }
+
+    .clip-cell.mismatch {
+      outline: 1px solid hsl(0,0%,50%);
+      outline-offset: -2px;
+    }
+
+    .key-text { color: var(--c-text-dim); font-size: 0.95em; }
+    .key-root { color: hsl(0,0%,90%); font-size: 1.05em; font-weight: 600; line-height: 1.1; }
+    .key-qual { color: hsl(0,0%,65%); font-size: 0.82em; line-height: 1; }
+
+    /* ── Footer ── */
+    hr { border: none; border-top: 1px solid var(--c-border); }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 1.2em;
+      color: var(--c-text-dim);
+      font-size: 0.9em;
+      flex-shrink: 0;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.35em; }
+    .legend-swatch {
+      width: 10px; height: 10px;
+      border: 1px solid transparent;
+    }
+    .swatch-match { background: hsl(31,70%,38%); }
+    .swatch-mismatch { background: hsl(210,60%,30%); outline: 1px solid hsl(0,0%,50%); }
+    .swatch-empty { background: transparent; border-color: hsl(0,0%,15%); }
+
+    .footer { display: flex; justify-content: flex-end; }
+
+    .btn {
+      font-size: 1rem;
+      background: var(--c-control-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 1em;
+      border-radius: 1em;
+      cursor: pointer;
+      user-select: none;
+    }
+    .btn:hover  { background: hsl(0,0%,14%); }
+    .btn:active { background: var(--c-accent); color: var(--c-accent-fg); }
+    .btn:focus  { outline: 2px solid var(--c-text-dim); }
+  </style>
+</head>
+<body>
+  <div class="header-block">
+    <div class="title">Session Key Map</div>
+    <div class="summary">
+      Session key: <span id="dominant-key"></span>
+      &ensp;·&ensp;
+      <span id="clip-count"></span> clips analyzed
+    </div>
+  </div>
+
+  <div class="grid-scroll">
+    <div id="grid"></div>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="legend-swatch swatch-match"></span> matches session key</span>
+    <span class="legend-item"><span class="legend-swatch swatch-mismatch"></span> different key</span>
+    <span class="legend-item"><span class="legend-swatch swatch-empty"></span> empty</span>
+  </div>
+
+  <hr />
+
+  <div class="footer">
+    <button class="btn" onclick="closeWithResult(null)">Close</button>
+  </div>
+</body>
+</html>

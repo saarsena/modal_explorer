@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Progression</title>
+  <script>
+    const KEY_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+
+    const isWebKit = window.webkit?.messageHandlers?.live;
+    const isWebView2 = window.chrome?.webview;
+
+    function closeWithResult(result) {
+      const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
+      if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
+      else if (isWebView2) window.chrome.webview.postMessage(msg);
+    }
+
+    function generate() {
+      const keyIdx = Number(document.getElementById('key').value);
+      closeWithResult({
+        key:         keyIdx,
+        keyName:     KEY_NAMES[keyIdx],
+        scale:       document.getElementById('scale').value,
+        template:    document.getElementById('template').value,
+        voicing:     document.getElementById('voicing').value,
+        sevenths:    document.getElementById('sevenths').checked,
+        snapToScale: document.getElementById('snapToScale').checked,
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Enter') generate();
+        if (e.key === 'Escape') closeWithResult(null);
+      });
+    });
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    * { margin: 0; }
+    input, button, select { font: inherit; }
+
+    :root {
+      --c-bg:           hsl(0,0%,21%);
+      --c-control-bg:   hsl(0,0%,16%);
+      --c-control-bg-h: hsl(0,0%,14%);
+      --c-input-bg:     hsl(0,0%,12%);
+      --c-text:         hsl(0,0%,71%);
+      --c-text-dim:     hsl(0,0%,41%);
+      --c-border:       hsl(0,0%,7%);
+      --c-accent:       hsl(31,100%,67%);
+      --c-accent-fg:    hsl(0,0%,7%);
+    }
+
+    html {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: "AbletonSansSmall", sans-serif;
+      font-size: 11.5px;
+      font-weight: 500;
+      -webkit-font-smoothing: antialiased;
+      height: 100%;
+    }
+
+    body {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25em 1.5em;
+    }
+
+    .form {
+      display: grid;
+      grid-template-columns: 6.5em 1fr;
+      gap: 0.45em 0.75em;
+      align-items: center;
+      width: 100%;
+    }
+
+    .title {
+      grid-column: 1 / -1;
+      font-size: 1.1em;
+      margin-bottom: 0.4em;
+    }
+
+    .label {
+      color: var(--c-text-dim);
+      white-space: nowrap;
+    }
+
+    select {
+      width: 100%;
+      background: var(--c-input-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 0.3em;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      outline-offset: 0;
+    }
+    select:focus { outline: 2px solid var(--c-text-dim); }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+      cursor: pointer;
+    }
+    .checkbox-row input[type="checkbox"] {
+      accent-color: var(--c-accent);
+      width: 12px;
+      height: 12px;
+      cursor: pointer;
+    }
+
+    .divider {
+      grid-column: 1 / -1;
+      border: none;
+      border-top: 1px solid var(--c-border);
+      margin: 0.3em 0;
+    }
+
+    .buttons {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 0.5em;
+      justify-content: flex-end;
+      margin-top: 0.15em;
+    }
+
+    button {
+      font-size: 1rem;
+      line-height: 1;
+      background: var(--c-control-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 1em;
+      border-radius: 1em;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    button:hover   { background: var(--c-control-bg-h); }
+    button:active  { background: var(--c-accent); color: var(--c-accent-fg); }
+    button:focus   { outline: 2px solid var(--c-text-dim); }
+  </style>
+</head>
+<body>
+  <div class="form">
+    <div class="title">Generate Progression</div>
+
+    <span class="label">Key</span>
+    <select id="key">
+      <option value="0">C</option>
+      <option value="1">C# / D♭</option>
+      <option value="2">D</option>
+      <option value="3">D# / E♭</option>
+      <option value="4">E</option>
+      <option value="5">F</option>
+      <option value="6">F# / G♭</option>
+      <option value="7">G</option>
+      <option value="8">G# / A♭</option>
+      <option value="9">A</option>
+      <option value="10">A# / B♭</option>
+      <option value="11">B</option>
+    </select>
+
+    <span class="label">Scale</span>
+    <select id="scale">
+      <option value="major">Major</option>
+      <option value="natural_minor">Natural Minor</option>
+      <option value="harmonic_minor">Harmonic Minor</option>
+      <option value="melodic_minor">Melodic Minor</option>
+      <option value="dorian">Dorian</option>
+      <option value="mixolydian">Mixolydian</option>
+      <option value="lydian">Lydian</option>
+      <option value="phrygian">Phrygian</option>
+      <option value="pentatonic_major">Pentatonic Major</option>
+      <option value="pentatonic_minor">Pentatonic Minor</option>
+      <option value="blues">Blues</option>
+    </select>
+
+    <span class="label">Template</span>
+    <select id="template">
+      <option value="I-V-vi-IV">I – V – vi – IV</option>
+      <option value="I-IV-V-I">I – IV – V – I</option>
+      <option value="I-vi-IV-V">I – vi – IV – V</option>
+      <option value="vi-IV-I-V">vi – IV – I – V</option>
+      <option value="ii-V-I">ii – V – I</option>
+      <option value="I-IV-vi-V">I – IV – vi – V</option>
+      <option value="I-V-IV-V">I – V – IV – V</option>
+      <option value="I-iii-IV-V">I – iii – IV – V</option>
+      <option value="12-bar blues">12-Bar Blues</option>
+      <option value="Andalusian cadence">Andalusian Cadence</option>
+      <option value="Pachelbel">Pachelbel Canon</option>
+      <option value="Circle of fifths">Circle of Fifths</option>
+    </select>
+
+    <span class="label">Voicing</span>
+    <select id="voicing">
+      <option value="smooth">Smooth (voice-led)</option>
+      <option value="close">Close Position</option>
+      <option value="drop2">Drop 2</option>
+      <option value="shell">Shell</option>
+    </select>
+
+    <span class="label">7ths</span>
+    <label class="checkbox-row">
+      <input type="checkbox" id="sevenths" />
+      Include seventh chords
+    </label>
+
+    <span class="label">Snap</span>
+    <label class="checkbox-row">
+      <input type="checkbox" id="snapToScale" />
+      Snap notes to scale
+    </label>
+
+    <hr class="divider" />
+
+    <div class="buttons">
+      <button onclick="closeWithResult(null)">Cancel</button>
+      <button onclick="generate()">Generate</button>
+    </div>
+  </div>
+</body>
+</html>

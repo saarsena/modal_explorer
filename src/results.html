@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harmony Analysis</title>
+  <script>
+    const DATA = __ANALYSIS_JSON__;
+
+    const isWebKit = window.webkit?.messageHandlers?.live;
+    const isWebView2 = window.chrome?.webview;
+
+    function closeWithResult(result) {
+      const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
+      if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
+      else if (isWebView2) window.chrome.webview.postMessage(msg);
+    }
+
+    function applySub(position, original, replacement) {
+      closeWithResult({ action: "substitute", position, original, replacement });
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function tensionColor(t) {
+      return `rgba(255, 160, 80, ${(t * 0.75).toFixed(2)})`;
+    }
+
+    function scaleDegrees(pitchClasses, scaleRoot, scaleIntervals) {
+      return pitchClasses
+        .map(pc => {
+          const rel = (pc - scaleRoot + 12) % 12;
+          const idx = scaleIntervals.indexOf(rel);
+          return idx >= 0 ? String(idx + 1) : null;
+        })
+        .filter(Boolean)
+        .filter((d, i, arr) => arr.indexOf(d) === i);
+    }
+
+    // ── Solo Map helpers ───────────────────────────────────────────────────────
+
+    const NOTE_NAMES      = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const NOTE_NAMES_FLAT = ["C","D♭","D","E♭","E","F","G♭","G","A♭","A","B♭","B"];
+
+    function midiToHz(midi) {
+      return (440 * Math.pow(2, (midi - 69) / 12)).toFixed(2);
+    }
+
+    function chordTonesHz(rootPc, pitchClasses) {
+      const rootMidi = 60 + rootPc;
+      return pitchClasses.map(pc => {
+        let midi = 60 + pc;
+        while (midi < rootMidi) midi += 12;
+        const octave = Math.floor(midi / 12) - 1;
+        return { name: NOTE_NAMES[pc % 12], octave, midi, hz: midiToHz(midi) };
+      }).sort((a, b) => a.midi - b.midi);
+    }
+
+    function charNoteHz(rootPc, charInterval) {
+      if (charInterval === null) return null;
+      const pc = (rootPc + charInterval) % 12;
+      const rootMidi = 60 + rootPc;
+      let midi = 60 + pc;
+      while (midi < rootMidi) midi += 12;
+      const octave = Math.floor(midi / 12) - 1;
+      return { name: NOTE_NAMES[pc % 12], octave, hz: midiToHz(midi) };
+    }
+
+    // Upper triad Hz — uses flat names since USTs are conventionally spelled with flats
+    function upperTriadHz(upperRootPc) {
+      const pcs = [upperRootPc, (upperRootPc + 4) % 12, (upperRootPc + 7) % 12];
+      const rootMidi = 60 + upperRootPc;
+      return pcs.map(pc => {
+        let midi = 60 + pc;
+        while (midi < rootMidi) midi += 12;
+        const octave = Math.floor(midi / 12) - 1;
+        return { name: NOTE_NAMES_FLAT[pc % 12], octave, midi, hz: midiToHz(midi) };
+      }).sort((a, b) => a.midi - b.midi);
+    }
+
+    // Four upper structure triads for dominant chords, ordered most-to-least used
+    const DOMINANT_USTS = [
+      { semi: 2, label: 'II',  sound: 'Lydian dominant',   ext: '9 · #11 · 13'  },
+      { semi: 6, label: '♭V',  sound: 'Altered dominant',  ext: '♭5 · 7 · ♭9'  },
+      { semi: 1, label: '♭II', sound: 'Phrygian dominant', ext: '♭9 · 11 · ♭13' },
+      { semi: 8, label: '♭VI', sound: 'Dark altered',      ext: '♭13 · R · ♭9'  },
+    ];
+
+    function suggestMode(roman, quality) {
+      const q = (quality || '').toLowerCase().replace(/_/g, '');
+      const r = (roman || '').replace(/[♭#°ø+∆Δ\d]/g, '').toLowerCase().trim();
+
+      if (q === 'halfdiminished' || q === 'halfdim' || q.includes('halfdim') || q === 'ø') {
+        return { mode: 'Locrian', charInterval: 6, charLabel: '♭5', why: '♭5 matches the ø chord' };
+      }
+      if (q.includes('diminished') || q === 'dim') {
+        return { mode: 'Diminished (whole-half)', charInterval: 6, charLabel: '♭5', why: 'whole-half scale over °7' };
+      }
+      if (q.includes('dominant') || q === 'dom7' || q === 'dom') {
+        return { mode: 'Mixolydian', charInterval: 10, charLabel: '♭7', why: '♭7 defines the dominant' };
+      }
+      if (q.includes('augmented') || q === 'aug') {
+        return { mode: 'Lydian Augmented', charInterval: 8, charLabel: '#5', why: '#5 = aug chord tone' };
+      }
+      if (q.includes('sus')) {
+        return { mode: 'Mixolydian', charInterval: 10, charLabel: '♭7', why: 'floating — ♭7 is common' };
+      }
+      if (q.includes('minor') || q === 'min' || q === 'm' || q === 'min7') {
+        if (r === 'vi' || r === 'vi7') {
+          return { mode: 'Aeolian', charInterval: 8, charLabel: '♭6', why: '♭6 = natural minor color' };
+        }
+        return { mode: 'Dorian', charInterval: 9, charLabel: '♮6', why: '♮6 = Dorian warmth over minor' };
+      }
+      if (q.includes('major') || q === 'maj' || q === 'maj7' || q === '') {
+        if (r === 'iv') {
+          return { mode: 'Lydian', charInterval: 6, charLabel: '#4', why: '#4 floats over IV' };
+        }
+        return { mode: 'Ionian', charInterval: 11, charLabel: 'maj7', why: 'maj7 colors the tonic' };
+      }
+      return { mode: 'Major Pentatonic', charInterval: null, charLabel: null, why: 'safe over any chord' };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('clip-name').textContent = DATA.clipName;
+      document.getElementById('inferred-key').textContent = DATA.inferredKey;
+      document.getElementById('note-count').textContent =
+        `${DATA.noteCount} notes · ${DATA.chords.length} chord${DATA.chords.length !== 1 ? 's' : ''}`;
+
+      // Chord boxes
+      const prog = document.getElementById('progression');
+      DATA.chords.forEach(chord => {
+        const box = document.createElement('div');
+        box.className = 'chord-box';
+        box.style.borderBottomColor = tensionColor(chord.tension);
+        const degs = scaleDegrees(chord.pitchClasses ?? [], DATA.scaleRoot, DATA.scaleIntervals);
+        const degsHtml = degs.length > 0
+          ? `<span class="degrees">${degs.join('·')}</span>`
+          : '';
+        box.innerHTML =
+          `<span class="roman">${esc(chord.roman)}</span>` +
+          `<span class="chord-name">${esc(chord.name)}</span>` +
+          degsHtml;
+        prog.appendChild(box);
+      });
+
+      // Substitutions
+      const subSection = document.getElementById('sub-section');
+      const subList = document.getElementById('sub-list');
+      if (DATA.substitutions.length === 0) {
+        subSection.style.display = 'none';
+      } else {
+        DATA.substitutions.forEach(s => {
+          const li = document.createElement('li');
+          li.innerHTML =
+            `<span class="sub-arrow">` +
+              `<span class="sub-original">${esc(s.original)}</span>` +
+              ` → ` +
+              `<span class="sub-replacement">${esc(s.replacement)}</span>` +
+            `</span>` +
+            `<span class="sub-rationale">${esc(s.rationale)}</span>` +
+            `<button class="apply-btn" onclick="applySub(${s.position}, '${esc(s.original)}', '${esc(s.replacement)}')">Apply</button>`;
+          subList.appendChild(li);
+        });
+      }
+
+      // Summary
+      const summaryEl = document.getElementById('summary');
+      if (DATA.summary) {
+        summaryEl.textContent = DATA.summary;
+      } else {
+        summaryEl.style.display = 'none';
+      }
+
+      // Solo Map
+      const soloMap = document.getElementById('solo-map');
+      DATA.chords.forEach(chord => {
+        const rootPc     = chord.root ?? 0;
+        const tones      = chordTonesHz(rootPc, chord.pitchClasses ?? []);
+        const suggestion = suggestMode(chord.roman, chord.quality);
+        const charNote   = charNoteHz(rootPc, suggestion.charInterval);
+        const isDominant = (chord.quality || '').toLowerCase().replace(/_/g, '').includes('dominant');
+
+        const tonesHtml = tones.map(t =>
+          `<div class="sm-tone">` +
+            `<span class="sm-note">${esc(t.name)}${t.octave}</span>` +
+            `<span class="sm-hz">${t.hz} Hz</span>` +
+          `</div>`
+        ).join('');
+
+        const charHtml = charNote
+          ? `<div class="sm-char">` +
+              `<span class="sm-char-label">lean on</span>` +
+              `<span class="sm-char-note">${esc(charNote.name)}${charNote.octave}</span>` +
+              `<span class="sm-char-interval">${esc(suggestion.charLabel)}</span>` +
+              `<span class="sm-hz">${charNote.hz} Hz</span>` +
+            `</div>`
+          : '';
+
+        let ustHtml = '';
+        if (isDominant) {
+          const cards = DOMINANT_USTS.map(ust => {
+            const upperRootPc = (rootPc + ust.semi) % 12;
+            const uTones = upperTriadHz(upperRootPc);
+            const uTonesHtml = uTones.map(t =>
+              `<span class="ust-tone">` +
+                `<span class="ust-note">${esc(t.name)}${t.octave}</span>` +
+                `<span class="sm-hz">${t.hz} Hz</span>` +
+              `</span>`
+            ).join('');
+            return `<div class="ust-card">` +
+              `<div class="ust-head">` +
+                `<span class="ust-label">${esc(ust.label)}</span>` +
+                `<span class="ust-triad-name">${esc(NOTE_NAMES_FLAT[upperRootPc])} major</span>` +
+                `<span class="ust-sound">${esc(ust.sound)}</span>` +
+                `<span class="ust-ext">${esc(ust.ext)}</span>` +
+              `</div>` +
+              `<div class="ust-tones">${uTonesHtml}</div>` +
+            `</div>`;
+          }).join('');
+
+          ustHtml =
+            `<div class="ust-section">` +
+              `<span class="ust-section-label">Upper Structures</span>` +
+              `<div class="ust-cards">${cards}</div>` +
+            `</div>`;
+        }
+
+        const entry = document.createElement('div');
+        entry.className = 'sm-entry';
+        entry.innerHTML =
+          `<div class="sm-head">` +
+            `<span class="sm-chord-name">${esc(chord.name)}</span>` +
+            `<span class="sm-roman">${esc(chord.roman)}</span>` +
+            `<span class="sm-arrow">→</span>` +
+            `<span class="sm-mode">${esc(suggestion.mode)}</span>` +
+            `<span class="sm-why">${esc(suggestion.why)}</span>` +
+          `</div>` +
+          `<div class="sm-tones">${tonesHtml}</div>` +
+          charHtml +
+          ustHtml;
+
+        soloMap.appendChild(entry);
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeWithResult(null);
+      });
+    });
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    * { margin: 0; }
+    button { font: inherit; }
+
+    :root {
+      --c-bg:         hsl(0,0%,21%);
+      --c-input-bg:   hsl(0,0%,12%);
+      --c-text:       hsl(0,0%,71%);
+      --c-text-dim:   hsl(0,0%,41%);
+      --c-border:     hsl(0,0%,10%);
+      --c-accent:     hsl(31,100%,67%);
+      --c-accent-fg:  hsl(0,0%,7%);
+      --c-control-bg: hsl(0,0%,16%);
+      --c-green:      hsl(135,50%,55%);
+      --c-ust-bg:     hsl(0,0%,9%);
+    }
+
+    html {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: "AbletonSansSmall", sans-serif;
+      font-size: 11.5px;
+      font-weight: 500;
+      -webkit-font-smoothing: antialiased;
+      height: 100%;
+    }
+
+    body {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Fixed header ──────────────────────────────────────────────── */
+    .header-pane {
+      flex-shrink: 0;
+      padding: 1.25em 1.5em 0.85em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85em;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .title { color: var(--c-text-dim); font-size: 1.05em; }
+    #clip-name { color: var(--c-text); }
+
+    .key-row { display: flex; align-items: baseline; gap: 0.6em; }
+    .key-label { color: var(--c-text-dim); }
+    #inferred-key { font-size: 1.4em; color: var(--c-accent); font-weight: 600; }
+    #note-count { color: var(--c-text-dim); }
+
+    .section-label {
+      color: var(--c-text-dim);
+      font-size: 0.95em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4em;
+    }
+
+    #progression { display: flex; flex-wrap: wrap; gap: 0.4em; }
+
+    .chord-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--c-input-bg);
+      border: 1px solid var(--c-border);
+      border-bottom: 3px solid var(--c-border);
+      padding: 0.4em 0.7em 0.3em;
+      min-width: 3.5em;
+      gap: 0.15em;
+    }
+    .roman      { color: var(--c-accent); font-size: 0.9em; }
+    .chord-name { color: var(--c-text); font-size: 1.05em; }
+    .degrees    { color: var(--c-text-dim); font-size: 0.78em; letter-spacing: 0.06em; }
+
+    /* ── Scrollable content ────────────────────────────────────────── */
+    .scroll-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.85em 1.5em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85em;
+    }
+
+    #sub-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.35em; }
+
+    #sub-list li {
+      display: grid;
+      grid-template-columns: 7em 1fr auto;
+      align-items: center;
+      gap: 0.6em;
+    }
+
+    .sub-arrow       { color: var(--c-text); white-space: nowrap; }
+    .sub-original    { color: var(--c-text-dim); }
+    .sub-replacement { color: var(--c-accent); }
+    .sub-rationale   { color: var(--c-text-dim); font-style: italic; }
+
+    .apply-btn {
+      font-size: 1rem;
+      line-height: 1;
+      background: var(--c-control-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 18px;
+      padding: 0 0.75em;
+      border-radius: 1em;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .apply-btn:hover  { background: hsl(0,0%,14%); }
+    .apply-btn:active { background: var(--c-accent); color: var(--c-accent-fg); }
+    .apply-btn:focus  { outline: 2px solid var(--c-text-dim); }
+
+    #summary { color: var(--c-text-dim); font-style: italic; font-size: 0.95em; }
+
+    /* ── Solo Map ──────────────────────────────────────────────────── */
+    #solo-map { display: flex; flex-direction: column; gap: 0.55em; }
+
+    .sm-entry {
+      background: var(--c-input-bg);
+      border: 1px solid var(--c-border);
+      border-radius: 2px;
+      padding: 0.55em 0.75em 0.5em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4em;
+    }
+
+    .sm-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45em;
+      flex-wrap: wrap;
+    }
+    .sm-chord-name { color: var(--c-text); font-size: 1.05em; font-weight: 600; }
+    .sm-roman      { color: var(--c-accent); font-size: 0.88em; }
+    .sm-arrow      { color: var(--c-text-dim); }
+    .sm-mode       { color: var(--c-green); font-weight: 600; font-size: 0.95em; }
+    .sm-why        { color: var(--c-text-dim); font-style: italic; font-size: 0.88em; }
+
+    .sm-tones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.15em 1.2em;
+    }
+
+    .sm-tone {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4em;
+    }
+    .sm-note { color: var(--c-text); font-size: 0.95em; min-width: 2.4em; }
+    .sm-hz   { color: var(--c-text-dim); font-size: 0.9em; font-variant-numeric: tabular-nums; }
+
+    .sm-char {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45em;
+      padding-top: 0.25em;
+      border-top: 1px solid hsl(0,0%,15%);
+    }
+    .sm-char-label    { color: var(--c-text-dim); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; }
+    .sm-char-note     { color: var(--c-accent); font-weight: 600; }
+    .sm-char-interval { color: var(--c-text-dim); font-size: 0.88em; }
+
+    /* ── Upper Structures ──────────────────────────────────────────── */
+    .ust-section {
+      padding-top: 0.4em;
+      border-top: 1px solid hsl(0,0%,15%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3em;
+    }
+
+    .ust-section-label {
+      color: var(--c-text-dim);
+      font-size: 0.82em;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .ust-cards { display: flex; flex-direction: column; gap: 0.25em; }
+
+    .ust-card {
+      background: var(--c-ust-bg);
+      border-radius: 2px;
+      padding: 0.3em 0.55em 0.35em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2em;
+    }
+
+    .ust-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45em;
+      flex-wrap: wrap;
+    }
+    .ust-label      { color: var(--c-accent); font-weight: 700; min-width: 2.2em; font-size: 0.95em; }
+    .ust-triad-name { color: var(--c-text); font-weight: 600; }
+    .ust-sound      { color: var(--c-green); font-size: 0.88em; }
+    .ust-ext        { color: var(--c-text-dim); font-size: 0.85em; font-style: italic; margin-left: auto; }
+
+    .ust-tones {
+      display: flex;
+      gap: 1.2em;
+      flex-wrap: wrap;
+      padding-left: 2.2em;
+    }
+
+    .ust-tone {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35em;
+    }
+    .ust-note { color: var(--c-text); min-width: 2.4em; font-size: 0.92em; }
+
+    /* ── Fixed footer ──────────────────────────────────────────────── */
+    .footer-pane {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: flex-end;
+      padding: 0.7em 1.5em;
+      border-top: 1px solid var(--c-border);
+    }
+
+    .close-btn {
+      font-size: 1rem;
+      line-height: 1;
+      background: var(--c-control-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 1em;
+      border-radius: 1em;
+      cursor: pointer;
+      user-select: none;
+    }
+    .close-btn:hover  { background: hsl(0,0%,14%); }
+    .close-btn:active { background: var(--c-accent); color: var(--c-accent-fg); }
+    .close-btn:focus  { outline: 2px solid var(--c-text-dim); }
+  </style>
+</head>
+<body>
+  <div class="header-pane">
+    <div>
+      <div class="title">Harmony Analysis — <span id="clip-name"></span></div>
+      <div class="key-row">
+        <span class="key-label">Key</span>
+        <span id="inferred-key"></span>
+        <span id="note-count"></span>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Progression</div>
+      <div id="progression"></div>
+    </div>
+  </div>
+
+  <div class="scroll-pane">
+    <div id="sub-section">
+      <div class="section-label">Substitution ideas</div>
+      <ul id="sub-list"></ul>
+    </div>
+
+    <div id="summary"></div>
+
+    <div>
+      <div class="section-label">Solo Map</div>
+      <div id="solo-map"></div>
+    </div>
+  </div>
+
+  <div class="footer-pane">
+    <button class="close-btn" onclick="closeWithResult(null)">Close</button>
+  </div>
+</body>
+</html>
