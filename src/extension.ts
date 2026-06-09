@@ -12,6 +12,7 @@ import {
 } from "@ableton-extensions/sdk";
 
 import { ChordgenEngine } from "./engine.js";
+import * as path from "node:path";
 import interfaceHtml from "./interface.html";
 import resultsHtml from "./results.html";
 import paletteHtml from "./palette.html";
@@ -367,15 +368,9 @@ function compatibilityLabel(
 export function activate(activation: ActivationContext) {
   const context = initialize(activation, "1.0.0");
 
-  const cwd = process.env["COMPOSITION_AIDE_PATH"];
-  if (!cwd) {
-    console.error(
-      "[composition-aide] COMPOSITION_AIDE_PATH is not set. " +
-      "Create a .env file in this extension directory with:\n" +
-      "  COMPOSITION_AIDE_PATH=C:\\path\\to\\your\\Composition Aide",
-    );
-    return;
-  }
+  // Default to the bundled engine/ directory; override with env var if needed
+  const cwd = process.env["COMPOSITION_AIDE_PATH"]
+    ?? path.join(__dirname, "..", "engine");
 
   const pythonCmd = process.env["PYTHON_CMD"] ?? "python";
   const engine = new ChordgenEngine(cwd, pythonCmd);

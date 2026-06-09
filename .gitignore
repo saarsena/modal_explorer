@@ -3,3 +3,6 @@ dist/
 .env
 *.tgz
 *.node
+__pycache__/
+*.pyc
+*.pyo

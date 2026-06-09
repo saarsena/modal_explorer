@@ -11,7 +11,7 @@ All theory operations are handled by a local Python engine (`chordgen`) that run
 - **Ableton Live 12** with the Extensions beta enabled
 - **Ableton Extensions SDK 1.0.0-beta.0** — the `.tgz` packages for `@ableton-extensions/sdk` and `@ableton-extensions/cli` must be present in the SDK root (see _Setup_ below)
 - **Node.js 18+**
-- **Python 3.9+** with the `chordgen` package available (see [chordgen](#the-python-engine))
+- **Python 3.9+** — the theory engine is pure Python stdlib, no packages required
 
 ---
 
@@ -33,16 +33,14 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env`:
+Edit `.env` and set `EXTENSION_HOST_PATH` to the path of `ExtensionHostNodeModule.node` from your Extensions SDK installation. That is the only required variable — the Python engine path defaults to the `engine/` directory bundled in this repo.
 
-```
-COMPOSITION_AIDE_PATH=/path/to/your/chordgen
-EXTENSION_HOST_PATH=/path/to/ExtensionHostNodeModule.node
-```
+Optional overrides:
 
-- `COMPOSITION_AIDE_PATH` — the directory that contains the `chordgen/` Python package (i.e. where `chordgen/server.py` lives).
-- `EXTENSION_HOST_PATH` — provided by the Extensions SDK; typically lives inside your Live installation.
-- `PYTHON_CMD` — optional, defaults to `python`. Set to `python3` or a full virtualenv path if needed.
+| Variable | Default | Purpose |
+|---|---|---|
+| `COMPOSITION_AIDE_PATH` | `engine/` (in repo) | Override the Python engine directory |
+| `PYTHON_CMD` | `python` | Use `python3` or a virtualenv path |
 
 ### 3. Build and run
 
@@ -122,9 +120,21 @@ Each upper structure triad shows its three note names and Hz values — useful a
 
 ## The Python Engine
 
-Composition Aide requires the `chordgen` Python package, which runs as a persistent subprocess and handles all music theory computations over a newline-delimited JSON-RPC protocol.
+The `engine/` directory contains the full theory engine — pure Python stdlib, no pip dependencies. It runs as a persistent subprocess alongside Live and handles all music theory computations over a newline-delimited JSON-RPC protocol.
 
-Operations used:
+**Files:**
+
+| File | Purpose |
+|---|---|
+| `chordgen/server.py` | JSON-RPC server — spawned by the extension |
+| `chordgen/__init__.py` | Public API surface for the server |
+| `music_theory.py` | Core primitives: notes, intervals, scales, chords |
+| `analyzer.py` | Key inference, Roman numeral analysis, substitution suggestions |
+| `voicing.py` | Close, drop2, shell, and smooth voice-leading strategies |
+| `songform.py` | Chord template expansion (I–V–vi–IV, 12-bar blues, etc.) |
+| `upper_structures.py` | Upper structure triad logic |
+
+Operations used by the extension:
 - `op_progression` — generate chord progressions from key/scale/template
 - `op_voice_progression` — voice a chord list with close, drop2, or smooth strategy
 - `op_recognize_chord` — identify a chord from a set of MIDI pitch classes
