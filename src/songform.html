@@ -133,8 +133,11 @@
     ["arp_up_8ths","Arpeggio Up"],
   ];
   const BASSES = [
-    ["none","No bass"],["roots","Roots"],["root_fifth","Root–Fifth"],["pump_8ths","Pumping 8ths"],
-    ["root_octave_8ths","Octave 8ths"],["walking","Walking"],["tresillo","Tresillo"],["offbeats","Offbeats"],
+    ["none","No bass"],["roots","Roots"],["root_fifth","Root–Fifth"],["quarter_pulse","Quarter Pulse"],
+    ["pump_8ths","Pumping 8ths"],["root_octave_8ths","Octave 8ths"],["two_feel","Two-Feel"],
+    ["walking","Walking"],["boogie","Boogie Shuffle"],["bossa","Bossa Nova"],["tumbao","Tumbao"],
+    ["tresillo","Tresillo"],["reggaeton","Reggaeton"],["offbeats","Offbeats"],
+    ["funk_16ths","Funk 16ths"],["pedal_pickup","Pedal + Pickup"],
   ];
   const SECTION_NAMES = ["Intro","Verse","Chorus","Bridge","Build","Drop","Break","Outro","Vamp","A","B"];
 
@@ -320,8 +323,8 @@
     aaba: () => {
       document.getElementById("g-sevenths").checked = true;
       return [
-        S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),
-        S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),
+        S("A", 8, 2, "ii-V-I", "swung_8ths", "two_feel"),
+        S("A", 8, 2, "ii-V-I", "swung_8ths", "two_feel"),
         S("B", 8, 2, "Circle of fifths", "swung_8ths", "walking"),
         S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),
       ];
@@ -330,7 +333,7 @@
       document.getElementById("g-sevenths").checked = true;
       return [
         S("Chorus 1", 12, 4, "12-bar blues", "boom_chuck", "walking"),
-        S("Chorus 2", 12, 4, "12-bar blues", "boom_chuck", "walking"),
+        S("Chorus 2", 12, 4, "12-bar blues", "boom_chuck", "boogie"),
       ];
     },
     edm: () => [
@@ -344,10 +347,10 @@
     lofi: () => {
       document.getElementById("g-sevenths").checked = true;
       return [
-        S("Vamp", 4, 2, "ii-V-I", "tresillo", "roots"),
-        S("Vamp", 4, 2, "I-vi-IV-V", "tresillo", "roots"),
-        S("Vamp", 4, 2, "ii-V-I", "tresillo", "roots"),
-        S("Vamp", 4, 2, "vi-IV-I-V", "tresillo", "roots"),
+        S("Vamp", 4, 2, "ii-V-I", "tresillo", "tumbao"),
+        S("Vamp", 4, 2, "I-vi-IV-V", "tresillo", "tumbao"),
+        S("Vamp", 4, 2, "ii-V-I", "tresillo", "tumbao"),
+        S("Vamp", 4, 2, "vi-IV-I-V", "tresillo", "tumbao"),
       ];
     },
   };

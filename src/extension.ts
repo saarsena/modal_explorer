@@ -572,6 +572,14 @@ function bassSpansFromChordEntries(
   });
 }
 
+/** Chromatic approach note: a half step into `target` from whichever side
+ *  is closer to `ref` (tie → from below). */
+function approachPitch(target: number, ref: number): number {
+  return Math.abs(target - 1 - ref) <= Math.abs(target + 1 - ref)
+    ? target - 1
+    : target + 1;
+}
+
 function buildBassNotes(
   spans: BassChordSpan[],
   pattern: string,
@@ -621,13 +629,105 @@ function buildBassNotes(
         for (let s = 0; s < steps; s++) {
           let pitch = cycle[s % cycle.length] ?? root;
           if (s === steps - 1 && steps > 1 && c.nextRootPc !== null) {
-            const target = anchor + c.nextRootPc;
-            pitch = Math.abs(target - 1 - fifth) <= Math.abs(target + 1 - fifth)
-              ? target - 1
-              : target + 1;
+            pitch = approachPitch(anchor + c.nextRootPc, fifth);
           }
           out.push(note(c.start + s * step, step * 0.9, pitch, s === 0 ? 1.0 : 0.88));
         }
+        break;
+      }
+      case "two_feel": {
+        // Jazz two-feel: half notes, root then fifth; the last half note
+        // before a chord change walks in chromatically instead
+        if (c.span < 2) { out.push(note(c.start, c.span * 0.95, root, 1.0)); break; }
+        const halves = Math.max(1, Math.round(c.span / 2));
+        const step = c.span / halves;
+        for (let s = 0; s < halves; s++) {
+          let pitch = s % 2 === 0 ? root : fifth;
+          if (s === halves - 1 && halves > 1 && c.nextRootPc !== null) {
+            pitch = approachPitch(anchor + c.nextRootPc, fifth);
+          }
+          out.push(note(c.start + s * step, step * 0.92, pitch, s % 2 === 0 ? 1.0 : 0.85));
+        }
+        break;
+      }
+      case "boogie": {
+        // Boogie-woogie shuffle: R-3-5-6-b7-6-5-3 in 8ths. Natural 6 over
+        // minor chords gives the idiomatic dorian lean of minor blues
+        const cycle = [root, third, fifth, root + 9, root + 10, root + 9, fifth, third];
+        const steps = Math.max(1, Math.round(c.span / 0.5));
+        const step = c.span / steps;
+        for (let s = 0; s < steps; s++) {
+          out.push(note(
+            c.start + s * step, step * 0.9,
+            cycle[s % cycle.length] ?? root,
+            s % 2 === 0 ? 1.0 : 0.8,
+          ));
+        }
+        break;
+      }
+      case "bossa": {
+        const sc = c.span / 4;
+        out.push(note(c.start + 0 * sc, 1.4 * sc, root, 1.0));
+        out.push(note(c.start + 1.5 * sc, 0.4 * sc, fifth, 0.8));
+        out.push(note(c.start + 2 * sc, 1.4 * sc, root, 0.95));
+        out.push(note(c.start + 3.5 * sc, 0.4 * sc, fifth, 0.8));
+        break;
+      }
+      case "tumbao": {
+        // Salsa tumbao: ghosted downbeat, fifth on the and-of-2, and the
+        // ponche on 4 anticipating the next chord's root
+        const sc = c.span / 4;
+        const ponche = c.nextRootPc !== null ? anchor + c.nextRootPc : root;
+        out.push(note(c.start + 0 * sc, 0.4 * sc, root, 0.7));
+        out.push(note(c.start + 1.5 * sc, 1.3 * sc, fifth, 0.95));
+        out.push(note(c.start + 3 * sc, 0.95 * sc, ponche, 1.0));
+        break;
+      }
+      case "quarter_pulse": {
+        const steps = Math.max(1, Math.round(c.span));
+        const step = c.span / steps;
+        for (let s = 0; s < steps; s++) {
+          out.push(note(c.start + s * step, step * 0.9, root, s === 0 ? 1.0 : 0.88));
+        }
+        break;
+      }
+      case "reggaeton": {
+        // Dembow gallop: 3-3-2 sixteenths repeating every 2 beats
+        const cells = Math.max(1, Math.round(c.span / 2));
+        const cell = c.span / cells;
+        const sc = cell / 2;
+        for (let s = 0; s < cells; s++) {
+          const t0 = c.start + s * cell;
+          out.push(note(t0 + 0 * sc, 0.7 * sc, root, s === 0 ? 1.0 : 0.95));
+          out.push(note(t0 + 0.75 * sc, 0.7 * sc, root, 0.8));
+          out.push(note(t0 + 1.5 * sc, 0.45 * sc, root, 0.85));
+        }
+        break;
+      }
+      case "funk_16ths": {
+        const sc = c.span / 4;
+        const hits: Array<[number, number, number, number]> = [
+          [0, 0.4, root, 1.0], [0.75, 0.2, root, 0.6],
+          [1.0, 0.4, root + 12, 0.9], [1.75, 0.2, root, 0.6],
+          [2.0, 0.4, root, 1.0], [2.75, 0.2, root, 0.6],
+          [3.0, 0.4, root + 12, 0.9], [3.5, 0.4, root, 0.8],
+        ];
+        for (const [t, d, p, v] of hits) {
+          out.push(note(c.start + t * sc, d * sc, p, v));
+        }
+        break;
+      }
+      case "pedal_pickup": {
+        // Held root with a single 8th-note chromatic pickup into the change
+        if (c.nextRootPc === null || c.span <= 1) {
+          out.push(note(c.start, c.span * 0.95, root, 1.0));
+          break;
+        }
+        out.push(note(c.start, c.span - 0.5, root, 1.0));
+        out.push(note(
+          c.start + c.span - 0.5, 0.4,
+          approachPitch(anchor + c.nextRootPc, root), 0.85,
+        ));
         break;
       }
       case "tresillo": {
