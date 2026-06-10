@@ -467,6 +467,20 @@
       <option value="8">2 bars (8)</option>
       <option value="16">4 bars (16)</option>
     </select>
+    <span class="ctrl-label">Rhythm</span>
+    <select id="rhythm-sel">
+      <option value="block">Block Chords</option>
+      <option value="halves">Halves</option>
+      <option value="quarters">Quarters</option>
+      <option value="pump_8ths">Pumping 8ths</option>
+      <option value="swung_8ths">Swung 8ths</option>
+      <option value="charleston">Charleston</option>
+      <option value="tresillo">Tresillo (3-3-2)</option>
+      <option value="boom_chuck">Boom-Chuck</option>
+      <option value="syncopated">Syncopated</option>
+      <option value="offbeats">Offbeat Skank</option>
+      <option value="arp_up_8ths">Arpeggio Up (8ths)</option>
+    </select>
     <button class="sm-btn primary" id="write-btn">Write to Clip</button>
     <button class="sm-btn" id="cancel-modal-btn">Cancel</button>
   </div>
@@ -1051,7 +1065,8 @@ async function writeToClip() {
     chordData.push({ name: item.name, notes });
   }
 
-  closeWithResult({ action: 'writeClip', chords: chordData, beatsPerChord, totalBeats });
+  const rhythm = document.getElementById('rhythm-sel').value;
+  closeWithResult({ action: 'writeClip', chords: chordData, beatsPerChord, totalBeats, rhythm });
 }
 
 // ── Mode info card ────────────────────────────────────────────────────────────

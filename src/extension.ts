@@ -75,6 +75,7 @@ interface DialogResult {
   sevenths: boolean;
   snapToScale?: boolean;
   customProgression?: string;
+  rhythm?: string;
 }
 
 type AnalyzeModalResult =
@@ -116,6 +117,7 @@ interface TheoryMachineResult {
   chords: Array<{ name: string; notes: number[] }>;
   beatsPerChord: number;
   totalBeats: number;
+  rhythm?: string;
 }
 
 interface CompatibleClip {
@@ -420,6 +422,93 @@ function progressionLabel(params: DialogResult): string {
   return params.customProgression?.trim() || params.template;
 }
 
+// ── Rhythm patterns ──────────────────────────────────────────────────────────
+// Each pattern subdivides a chord's time slot. Hits are positioned within a
+// 4-beat span and scaled to the actual beats-per-chord, so figures keep their
+// shape at any chord duration. Gaps between hits are rests; `v` scales the
+// base velocity (accents > ghosts). `arp: true` cycles through the voicing's
+// pitches one note per hit instead of restriking the full chord.
+
+interface RhythmHit { t: number; d: number; v: number }
+interface RhythmPattern { span: number; hits: RhythmHit[]; arp?: boolean }
+
+const RHYTHM_PATTERNS: Record<string, RhythmPattern> = {
+  halves: { span: 4, hits: [
+    { t: 0, d: 2, v: 1.0 }, { t: 2, d: 2, v: 0.9 },
+  ]},
+  quarters: { span: 4, hits: [
+    { t: 0, d: 1, v: 1.0 }, { t: 1, d: 1, v: 0.85 },
+    { t: 2, d: 1, v: 0.95 }, { t: 3, d: 1, v: 0.85 },
+  ]},
+  pump_8ths: { span: 4, hits: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map(t => (
+    { t, d: 0.45, v: t % 1 === 0 ? 1.0 : 0.8 }
+  ))},
+  swung_8ths: { span: 4, hits: [0, 1, 2, 3].flatMap(b => [
+    { t: b, d: 0.6, v: 1.0 }, { t: b + 0.66, d: 0.3, v: 0.75 },
+  ])},
+  charleston: { span: 4, hits: [
+    { t: 0, d: 1.4, v: 1.0 }, { t: 1.5, d: 2.4, v: 0.85 },
+  ]},
+  tresillo: { span: 4, hits: [
+    { t: 0, d: 1.4, v: 1.0 }, { t: 1.5, d: 1.4, v: 0.85 }, { t: 3, d: 0.9, v: 0.95 },
+  ]},
+  boom_chuck: { span: 4, hits: [
+    { t: 0, d: 0.95, v: 1.0 }, { t: 1, d: 0.45, v: 0.75 }, { t: 1.5, d: 0.45, v: 0.75 },
+    { t: 2, d: 0.95, v: 0.95 }, { t: 3, d: 0.45, v: 0.75 }, { t: 3.5, d: 0.45, v: 0.75 },
+  ]},
+  syncopated: { span: 4, hits: [
+    { t: 0, d: 0.7, v: 1.0 }, { t: 0.75, d: 0.2, v: 0.7 }, { t: 1, d: 0.45, v: 0.85 },
+    { t: 1.5, d: 1.4, v: 0.95 }, { t: 3, d: 0.45, v: 0.85 }, { t: 3.5, d: 0.45, v: 0.8 },
+  ]},
+  offbeats: { span: 4, hits: [0.5, 1.5, 2.5, 3.5].map(t => (
+    { t, d: 0.35, v: 0.95 }
+  ))},
+  arp_up_8ths: { span: 4, arp: true, hits: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map(t => (
+    { t, d: 0.5, v: t % 1 === 0 ? 0.95 : 0.8 }
+  ))},
+};
+
+const BASE_VELOCITY = 90;
+
+/** Expand voiced chords into notes, one chord per `beatsPerChord` slot.
+ *  A `rhythmName` of "block" (or unknown) keeps the one-hit-per-chord shape. */
+function buildRhythmNotes(
+  voicings: number[][],
+  beatsPerChord: number,
+  rhythmName: string | undefined,
+): NoteDescription[] {
+  const pattern = rhythmName ? RHYTHM_PATTERNS[rhythmName] : undefined;
+
+  if (!pattern) {
+    return voicings.flatMap((noteNums, i) =>
+      noteNums.map(pitch => ({
+        pitch: Math.max(0, Math.min(127, pitch)),
+        startTime: i * beatsPerChord,
+        duration: beatsPerChord * 0.95,
+        velocity: BASE_VELOCITY,
+      })),
+    );
+  }
+
+  const scale = beatsPerChord / pattern.span;
+  return voicings.flatMap((noteNums, i) => {
+    if (noteNums.length === 0) return [];
+    const pitches = [...noteNums].sort((a, b) => a - b);
+    return pattern.hits.flatMap((hit, hitIdx) => {
+      const velocity = Math.max(1, Math.min(127, Math.round(BASE_VELOCITY * hit.v)));
+      const hitPitches = pattern.arp
+        ? [pitches[hitIdx % pitches.length] ?? 60]
+        : pitches;
+      return hitPitches.map(pitch => ({
+        pitch: Math.max(0, Math.min(127, pitch)),
+        startTime: i * beatsPerChord + hit.t * scale,
+        duration: hit.d * scale,
+        velocity,
+      }));
+    });
+  });
+}
+
 // ── Extension entry ──────────────────────────────────────────────────────────
 
 export function activate(activation: ActivationContext) {
@@ -450,7 +539,7 @@ export function activate(activation: ActivationContext) {
 
       const rawResult = await context.ui.showModalDialog(
         `data:text/html,${encodeURIComponent(interfaceHtml)}`,
-        380, 392,
+        380, 416,
       );
 
       let params: DialogResult | null;
@@ -473,14 +562,7 @@ export function activate(activation: ActivationContext) {
       const clipName =
         `${progressionLabel(params)} — ${params.keyName} ${params.scale.replace(/_/g, " ")}`;
 
-      let notes: NoteDescription[] = voicings.flatMap((noteNums, i) =>
-        noteNums.map(pitch => ({
-          pitch: Math.max(0, Math.min(127, pitch)),
-          startTime: i * beatsPerChord,
-          duration: beatsPerChord * 0.95,
-          velocity: 90,
-        })),
-      );
+      let notes = buildRhythmNotes(voicings, beatsPerChord, params.rhythm);
 
       if (params.snapToScale) {
         const intervals = SCALE_PCS_MAP[params.scale] ?? MAJOR_SCALE_PCS;
@@ -1007,7 +1089,7 @@ export function activate(activation: ActivationContext) {
 
       const rawResult = await context.ui.showModalDialog(
         `data:text/html,${encodeURIComponent(interfaceHtml)}`,
-        380, 392,
+        380, 416,
       );
 
       let params: DialogResult | null;
@@ -1024,14 +1106,7 @@ export function activate(activation: ActivationContext) {
       });
 
       const beatsPerChord = fillBeats / chords.length;
-      let notes: NoteDescription[] = voicings.flatMap((noteNums, i) =>
-        noteNums.map(pitch => ({
-          pitch: Math.max(0, Math.min(127, pitch)),
-          startTime: i * beatsPerChord,
-          duration: beatsPerChord * 0.95,
-          velocity: 90,
-        })),
-      );
+      let notes = buildRhythmNotes(voicings, beatsPerChord, params.rhythm);
 
       if (params.snapToScale) {
         const intervals = SCALE_PCS_MAP[params.scale] ?? MAJOR_SCALE_PCS;
@@ -1730,13 +1805,8 @@ export function activate(activation: ActivationContext) {
 
       const { chords, beatsPerChord, totalBeats } = result;
 
-      const newNotes: NoteDescription[] = chords.flatMap((chord, i) =>
-        chord.notes.map(pitch => ({
-          pitch: Math.max(0, Math.min(127, pitch)),
-          startTime: i * beatsPerChord,
-          duration: beatsPerChord * 0.95,
-          velocity: 90,
-        })),
+      const newNotes = buildRhythmNotes(
+        chords.map(c => c.notes), beatsPerChord, result.rhythm,
       );
 
       const clipName = chords.map(c => c.name).join(" – ");

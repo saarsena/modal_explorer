@@ -1031,6 +1031,7 @@ var interface_default = `<!DOCTYPE html>
         sevenths:          document.getElementById('sevenths').checked,
         snapToScale:       document.getElementById('snapToScale').checked,
         customProgression: document.getElementById('custom').value.trim(),
+        rhythm:            document.getElementById('rhythm').value,
       });
     }
 
@@ -1319,6 +1320,21 @@ var interface_default = `<!DOCTYPE html>
       <option value="close">Close Position</option>
       <option value="drop2">Drop 2</option>
       <option value="shell">Shell</option>
+    </select>
+
+    <span class="label">Rhythm</span>
+    <select id="rhythm">
+      <option value="block">Block Chords</option>
+      <option value="halves">Halves</option>
+      <option value="quarters">Quarters</option>
+      <option value="pump_8ths">Pumping 8ths</option>
+      <option value="swung_8ths">Swung 8ths</option>
+      <option value="charleston">Charleston</option>
+      <option value="tresillo">Tresillo (3-3-2)</option>
+      <option value="boom_chuck">Boom-Chuck</option>
+      <option value="syncopated">Syncopated</option>
+      <option value="offbeats">Offbeat Skank</option>
+      <option value="arp_up_8ths">Arpeggio Up (8ths)</option>
     </select>
 
     <span class="label">7ths</span>
@@ -3091,6 +3107,20 @@ var theory_machine_default = `<!DOCTYPE html>
       <option value="8">2 bars (8)</option>
       <option value="16">4 bars (16)</option>
     </select>
+    <span class="ctrl-label">Rhythm</span>
+    <select id="rhythm-sel">
+      <option value="block">Block Chords</option>
+      <option value="halves">Halves</option>
+      <option value="quarters">Quarters</option>
+      <option value="pump_8ths">Pumping 8ths</option>
+      <option value="swung_8ths">Swung 8ths</option>
+      <option value="charleston">Charleston</option>
+      <option value="tresillo">Tresillo (3-3-2)</option>
+      <option value="boom_chuck">Boom-Chuck</option>
+      <option value="syncopated">Syncopated</option>
+      <option value="offbeats">Offbeat Skank</option>
+      <option value="arp_up_8ths">Arpeggio Up (8ths)</option>
+    </select>
     <button class="sm-btn primary" id="write-btn">Write to Clip</button>
     <button class="sm-btn" id="cancel-modal-btn">Cancel</button>
   </div>
@@ -3675,7 +3705,8 @@ async function writeToClip() {
     chordData.push({ name: item.name, notes });
   }
 
-  closeWithResult({ action: 'writeClip', chords: chordData, beatsPerChord, totalBeats });
+  const rhythm = document.getElementById('rhythm-sel').value;
+  closeWithResult({ action: 'writeClip', chords: chordData, beatsPerChord, totalBeats, rhythm });
 }
 
 // \u2500\u2500 Mode info card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -4264,6 +4295,79 @@ async function resolveDialogChords(eng, params) {
 function progressionLabel(params) {
   return params.customProgression?.trim() || params.template;
 }
+var RHYTHM_PATTERNS = {
+  halves: { span: 4, hits: [
+    { t: 0, d: 2, v: 1 },
+    { t: 2, d: 2, v: 0.9 }
+  ] },
+  quarters: { span: 4, hits: [
+    { t: 0, d: 1, v: 1 },
+    { t: 1, d: 1, v: 0.85 },
+    { t: 2, d: 1, v: 0.95 },
+    { t: 3, d: 1, v: 0.85 }
+  ] },
+  pump_8ths: { span: 4, hits: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((t) => ({ t, d: 0.45, v: t % 1 === 0 ? 1 : 0.8 })) },
+  swung_8ths: { span: 4, hits: [0, 1, 2, 3].flatMap((b) => [
+    { t: b, d: 0.6, v: 1 },
+    { t: b + 0.66, d: 0.3, v: 0.75 }
+  ]) },
+  charleston: { span: 4, hits: [
+    { t: 0, d: 1.4, v: 1 },
+    { t: 1.5, d: 2.4, v: 0.85 }
+  ] },
+  tresillo: { span: 4, hits: [
+    { t: 0, d: 1.4, v: 1 },
+    { t: 1.5, d: 1.4, v: 0.85 },
+    { t: 3, d: 0.9, v: 0.95 }
+  ] },
+  boom_chuck: { span: 4, hits: [
+    { t: 0, d: 0.95, v: 1 },
+    { t: 1, d: 0.45, v: 0.75 },
+    { t: 1.5, d: 0.45, v: 0.75 },
+    { t: 2, d: 0.95, v: 0.95 },
+    { t: 3, d: 0.45, v: 0.75 },
+    { t: 3.5, d: 0.45, v: 0.75 }
+  ] },
+  syncopated: { span: 4, hits: [
+    { t: 0, d: 0.7, v: 1 },
+    { t: 0.75, d: 0.2, v: 0.7 },
+    { t: 1, d: 0.45, v: 0.85 },
+    { t: 1.5, d: 1.4, v: 0.95 },
+    { t: 3, d: 0.45, v: 0.85 },
+    { t: 3.5, d: 0.45, v: 0.8 }
+  ] },
+  offbeats: { span: 4, hits: [0.5, 1.5, 2.5, 3.5].map((t) => ({ t, d: 0.35, v: 0.95 })) },
+  arp_up_8ths: { span: 4, arp: true, hits: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((t) => ({ t, d: 0.5, v: t % 1 === 0 ? 0.95 : 0.8 })) }
+};
+var BASE_VELOCITY = 90;
+function buildRhythmNotes(voicings, beatsPerChord, rhythmName) {
+  const pattern = rhythmName ? RHYTHM_PATTERNS[rhythmName] : void 0;
+  if (!pattern) {
+    return voicings.flatMap(
+      (noteNums, i) => noteNums.map((pitch) => ({
+        pitch: Math.max(0, Math.min(127, pitch)),
+        startTime: i * beatsPerChord,
+        duration: beatsPerChord * 0.95,
+        velocity: BASE_VELOCITY
+      }))
+    );
+  }
+  const scale = beatsPerChord / pattern.span;
+  return voicings.flatMap((noteNums, i) => {
+    if (noteNums.length === 0) return [];
+    const pitches = [...noteNums].sort((a, b) => a - b);
+    return pattern.hits.flatMap((hit, hitIdx) => {
+      const velocity = Math.max(1, Math.min(127, Math.round(BASE_VELOCITY * hit.v)));
+      const hitPitches = pattern.arp ? [pitches[hitIdx % pitches.length] ?? 60] : pitches;
+      return hitPitches.map((pitch) => ({
+        pitch: Math.max(0, Math.min(127, pitch)),
+        startTime: i * beatsPerChord + hit.t * scale,
+        duration: hit.d * scale,
+        velocity
+      }));
+    });
+  });
+}
 function activate(activation) {
   const context = initialize(activation, "1.0.0");
   const cwd = process.env["COMPOSITION_AIDE_PATH"] ?? path.join(__dirname, "..", "engine");
@@ -4281,7 +4385,7 @@ function activate(activation) {
       const rawResult = await context.ui.showModalDialog(
         `data:text/html,${encodeURIComponent(interface_default)}`,
         380,
-        392
+        416
       );
       let params;
       try {
@@ -4299,14 +4403,7 @@ function activate(activation) {
       });
       const beatsPerChord = selectionBeats / chords.length;
       const clipName = `${progressionLabel(params)} \u2014 ${params.keyName} ${params.scale.replace(/_/g, " ")}`;
-      let notes = voicings.flatMap(
-        (noteNums, i) => noteNums.map((pitch) => ({
-          pitch: Math.max(0, Math.min(127, pitch)),
-          startTime: i * beatsPerChord,
-          duration: beatsPerChord * 0.95,
-          velocity: 90
-        }))
-      );
+      let notes = buildRhythmNotes(voicings, beatsPerChord, params.rhythm);
       if (params.snapToScale) {
         const intervals = SCALE_PCS_MAP[params.scale] ?? MAJOR_SCALE_PCS;
         const scalePCs = new Set(intervals.map((i) => (params.key + i) % 12));
@@ -4706,7 +4803,7 @@ function activate(activation) {
       const rawResult = await context.ui.showModalDialog(
         `data:text/html,${encodeURIComponent(interface_default)}`,
         380,
-        392
+        416
       );
       let params;
       try {
@@ -4722,14 +4819,7 @@ function activate(activation) {
         octave: 4
       });
       const beatsPerChord = fillBeats / chords.length;
-      let notes = voicings.flatMap(
-        (noteNums, i) => noteNums.map((pitch) => ({
-          pitch: Math.max(0, Math.min(127, pitch)),
-          startTime: i * beatsPerChord,
-          duration: beatsPerChord * 0.95,
-          velocity: 90
-        }))
-      );
+      let notes = buildRhythmNotes(voicings, beatsPerChord, params.rhythm);
       if (params.snapToScale) {
         const intervals = SCALE_PCS_MAP[params.scale] ?? MAJOR_SCALE_PCS;
         const scalePCs = new Set(intervals.map((i) => (params.key + i) % 12));
@@ -5326,13 +5416,10 @@ function activate(activation) {
       }
       if (!result || result.action !== "writeClip") return;
       const { chords, beatsPerChord, totalBeats } = result;
-      const newNotes = chords.flatMap(
-        (chord, i) => chord.notes.map((pitch) => ({
-          pitch: Math.max(0, Math.min(127, pitch)),
-          startTime: i * beatsPerChord,
-          duration: beatsPerChord * 0.95,
-          velocity: 90
-        }))
+      const newNotes = buildRhythmNotes(
+        chords.map((c) => c.notes),
+        beatsPerChord,
+        result.rhythm
       );
       const clipName = chords.map((c) => c.name).join(" \u2013 ");
       const existing = slot.clip;

@@ -64,7 +64,7 @@ Features are invoked from Live's context menu. All commands are non-destructive 
 
 | Command | Trigger | What it does |
 |---|---|---|
-| **Generate Progression** | Right-click MIDI track arrangement selection | Pick key, scale, chord template, voicing, and 7ths toggle — or type your own progression as **Roman numerals or chord names** (`ii7 V7 Imaj7`, `bVII`, `V7/ii`, `Dm7 G7 Cmaj7`), with live validation as you type. Writes a fully voiced progression across selected MIDI tracks. |
+| **Generate Progression** | Right-click MIDI track arrangement selection | Pick key, scale, chord template, voicing, and 7ths toggle — or type your own progression as **Roman numerals or chord names** (`ii7 V7 Imaj7`, `bVII`, `V7/ii`, `Dm7 G7 Cmaj7`), with live validation as you type. A **Rhythm** picker applies comping patterns to the output — Charleston, tresillo, pumping 8ths, offbeat skank, boom-chuck, arpeggio and more, with accents and rests — instead of block chords. Writes a fully voiced progression across selected MIDI tracks. |
 | **Fill Clip with Progression** | Right-click MIDI clip | Same dialog as Generate (including custom Roman numeral input), but fills an existing clip rather than creating a new one. |
 | **Insert Chord** | Right-click session clip slot | Opens the Chord Palette: all diatonic chords for Live's current Key/Scale, triads and 7ths tabs, 12 scale types, dynamic grid. Pick length, octave, and voicing then click Insert. |
 

@@ -27,6 +27,7 @@
         sevenths:          document.getElementById('sevenths').checked,
         snapToScale:       document.getElementById('snapToScale').checked,
         customProgression: document.getElementById('custom').value.trim(),
+        rhythm:            document.getElementById('rhythm').value,
       });
     }
 
@@ -315,6 +316,21 @@
       <option value="close">Close Position</option>
       <option value="drop2">Drop 2</option>
       <option value="shell">Shell</option>
+    </select>
+
+    <span class="label">Rhythm</span>
+    <select id="rhythm">
+      <option value="block">Block Chords</option>
+      <option value="halves">Halves</option>
+      <option value="quarters">Quarters</option>
+      <option value="pump_8ths">Pumping 8ths</option>
+      <option value="swung_8ths">Swung 8ths</option>
+      <option value="charleston">Charleston</option>
+      <option value="tresillo">Tresillo (3-3-2)</option>
+      <option value="boom_chuck">Boom-Chuck</option>
+      <option value="syncopated">Syncopated</option>
+      <option value="offbeats">Offbeat Skank</option>
+      <option value="arp_up_8ths">Arpeggio Up (8ths)</option>
     </select>
 
     <span class="label">7ths</span>
