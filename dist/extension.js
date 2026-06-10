@@ -4175,6 +4175,9 @@ var bass_default = `<!DOCTYPE html>
 </html>
 `;
 
+// src/songform.html
+var songform_default = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>Compose Song Form</title>\n<style>\n  *, *::before, *::after { box-sizing: border-box; margin: 0; }\n  input, button, select { font: inherit; }\n  :root {\n    --c-bg:           hsl(0,0%,21%);\n    --c-card:         hsl(0,0%,17%);\n    --c-control-bg:   hsl(0,0%,16%);\n    --c-control-bg-h: hsl(0,0%,13%);\n    --c-input-bg:     hsl(0,0%,12%);\n    --c-text:         hsl(0,0%,71%);\n    --c-text-dim:     hsl(0,0%,45%);\n    --c-border:       hsl(0,0%,7%);\n    --c-accent:       hsl(31,100%,67%);\n    --c-accent-fg:    hsl(0,0%,7%);\n    --c-bad:          hsl(0,65%,55%);\n  }\n  html { background: var(--c-bg); color: var(--c-text); font-family: "AbletonSansSmall", sans-serif; font-size: 11.5px; font-weight: 500; -webkit-font-smoothing: antialiased; }\n  body { padding: 1em 1.25em; display: flex; flex-direction: column; gap: 0.7em; height: 100vh; }\n  .title-row { display: flex; align-items: center; gap: 1em; }\n  .title { font-size: 1.15em; }\n  .spacer { flex: 1; }\n  select, input[type="text"], input[type="number"] {\n    background: var(--c-input-bg); color: var(--c-text);\n    border: 1px solid var(--c-border); height: 20px; padding: 0 0.3em;\n  }\n  select { appearance: none; -webkit-appearance: none; cursor: pointer; }\n  select:focus, input:focus { outline: 2px solid var(--c-text-dim); }\n  label.inline { display: flex; align-items: center; gap: 0.35em; color: var(--c-text-dim); white-space: nowrap; }\n  label.inline input[type="checkbox"] { accent-color: var(--c-accent); width: 12px; height: 12px; }\n  .globals { display: flex; align-items: center; gap: 0.9em; flex-wrap: wrap; }\n\n  #sections { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.45em; padding-right: 2px; }\n  .sec {\n    background: var(--c-card); border: 1px solid var(--c-border);\n    padding: 0.5em 0.6em; display: flex; flex-direction: column; gap: 0.4em;\n  }\n  .sec-line { display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; }\n  .sec-name { width: 7em; }\n  .sec input.custom { flex: 1; min-width: 12em; }\n  .lbl { color: var(--c-text-dim); white-space: nowrap; }\n  .sec button.icon {\n    width: 22px; height: 20px; line-height: 1; padding: 0;\n    background: var(--c-control-bg); color: var(--c-text);\n    border: 1px solid var(--c-border); cursor: pointer; border-radius: 3px;\n  }\n  .sec button.icon:hover { background: var(--c-control-bg-h); }\n  .sec input.custom.bad { border-color: var(--c-bad); color: var(--c-bad); }\n\n  .footer { display: flex; align-items: center; gap: 0.75em; }\n  #total { color: var(--c-text-dim); }\n  button.btn {\n    font-size: 1rem; line-height: 1; background: var(--c-control-bg); color: var(--c-text);\n    border: 1px solid var(--c-border); height: 22px; padding: 0 1.1em;\n    border-radius: 1em; cursor: pointer; white-space: nowrap;\n  }\n  button.btn:hover { background: var(--c-control-bg-h); }\n  button.btn.primary { background: var(--c-accent); color: var(--c-accent-fg); border-color: var(--c-accent); }\n  button.btn.primary:hover { filter: brightness(1.08); }\n</style>\n</head>\n<body>\n  <div class="title-row">\n    <span class="title">Compose Song Form</span>\n    <span class="spacer"></span>\n    <span class="lbl">Form</span>\n    <select id="preset">\n      <option value="">Load a form\u2026</option>\n      <option value="verse_chorus">Verse\u2013Chorus (pop)</option>\n      <option value="aaba">AABA (32-bar)</option>\n      <option value="blues">12-Bar Blues \xD72</option>\n      <option value="edm">EDM Arc</option>\n      <option value="lofi">Lo-fi Vamp Set</option>\n    </select>\n  </div>\n\n  <div class="globals">\n    <span class="lbl">Key</span>\n    <select id="g-key"></select>\n    <span class="lbl">Scale</span>\n    <select id="g-scale"></select>\n    <span class="lbl">Voicing</span>\n    <select id="g-voicing">\n      <option value="smooth">Smooth</option>\n      <option value="close">Close</option>\n      <option value="drop2">Drop 2</option>\n      <option value="shell">Shell</option>\n    </select>\n    <label class="inline"><input type="checkbox" id="g-sevenths" /> 7ths</label>\n    <span class="lbl">Bass register</span>\n    <select id="g-bassoct">\n      <option value="1">Low</option>\n      <option value="2" selected>Standard</option>\n      <option value="3">High</option>\n    </select>\n  </div>\n\n  <div id="sections"></div>\n\n  <div class="footer">\n    <button class="btn" id="add">+ Add Section</button>\n    <span id="total"></span>\n    <span class="spacer"></span>\n    <button class="btn" id="cancel">Cancel</button>\n    <button class="btn primary" id="write">Write to Session</button>\n  </div>\n\n<script>\n  const isWebKit = window.webkit?.messageHandlers?.live;\n  const isWebView2 = window.chrome?.webview;\n  function closeWithResult(result) {\n    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };\n    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);\n    else if (isWebView2) window.chrome.webview.postMessage(msg);\n  }\n\n  const KEY_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];\n  const SCALES = [\n    ["major","Major"],["natural_minor","Natural Minor"],["harmonic_minor","Harmonic Minor"],\n    ["melodic_minor","Melodic Minor"],["dorian","Dorian"],["phrygian","Phrygian"],\n    ["lydian","Lydian"],["mixolydian","Mixolydian"],\n  ];\n  const TEMPLATES = ["I-V-vi-IV","I-IV-V-I","I-vi-IV-V","vi-IV-I-V","ii-V-I","I-IV-vi-V",\n    "I-V-IV-V","I-iii-IV-V","12-bar blues","Andalusian cadence","Pachelbel","Circle of fifths"];\n  const RHYTHMS = [\n    ["block","Block Chords"],["halves","Halves"],["quarters","Quarters"],["pump_8ths","Pumping 8ths"],\n    ["swung_8ths","Swung 8ths"],["charleston","Charleston"],["tresillo","Tresillo"],\n    ["boom_chuck","Boom-Chuck"],["syncopated","Syncopated"],["offbeats","Offbeat Skank"],\n    ["arp_up_8ths","Arpeggio Up"],\n  ];\n  const BASSES = [\n    ["none","No bass"],["roots","Roots"],["root_fifth","Root\u2013Fifth"],["pump_8ths","Pumping 8ths"],\n    ["root_octave_8ths","Octave 8ths"],["walking","Walking"],["tresillo","Tresillo"],["offbeats","Offbeats"],\n  ];\n  const SECTION_NAMES = ["Intro","Verse","Chorus","Bridge","Build","Drop","Break","Outro","Vamp","A","B"];\n\n  const init = window._INIT ?? { key: 0, scale: "major" };\n  let sections = [];\n\n  function fillSelect(sel, pairs, value) {\n    sel.innerHTML = "";\n    for (const [v, label] of pairs) {\n      const o = document.createElement("option");\n      o.value = v; o.textContent = label;\n      if (v === value) o.selected = true;\n      sel.appendChild(o);\n    }\n  }\n\n  function defaultSection() {\n    return {\n      name: "Verse", bars: 4, beatsPerChord: 2,\n      key: Number(document.getElementById("g-key").value),\n      scale: document.getElementById("g-scale").value,\n      template: "I-V-vi-IV", customProgression: "",\n      rhythm: "block", bass: "none",\n    };\n  }\n\n  // \u2500\u2500 Engine validation for custom progressions (best-effort) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  const ENGINE = "http://127.0.0.1:7842";\n  const ROMAN_RE = /^[b#\u266D\u266F]?[ivIV]/;\n  async function engineOp(op, params) {\n    const r = await fetch(ENGINE, { method: "POST",\n      headers: { "Content-Type": "application/json" },\n      body: JSON.stringify({ op, ...params }) });\n    const data = await r.json();\n    if (data.error) throw new Error(data.error);\n    return data.result;\n  }\n  async function validateCustom(inputEl, sec) {\n    const text = inputEl.value.trim();\n    if (!text) { inputEl.classList.remove("bad"); inputEl.title = ""; return; }\n    const tokens = text.split(/[\\s,|]+/).filter(Boolean);\n    try {\n      const names = await Promise.all(tokens.map(async tok => {\n        const roman = () => engineOp("parse_roman", { roman: tok, key: sec.key, scale: sec.scale });\n        const name  = () => engineOp("parse_chord", { name: tok });\n        const [a, b] = ROMAN_RE.test(tok) ? [roman, name] : [name, roman];\n        try { return (await a()).chord.name; } catch { return (await b()).chord.name; }\n      }));\n      inputEl.classList.remove("bad");\n      inputEl.title = names.join(" \u2013 ");\n    } catch (e) {\n      if (e instanceof TypeError) return; // engine HTTP unreachable \u2014 skip\n      inputEl.classList.add("bad");\n      inputEl.title = String(e.message || e);\n    }\n  }\n\n  // \u2500\u2500 Section rows \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  function render() {\n    const host = document.getElementById("sections");\n    host.innerHTML = "";\n    sections.forEach((sec, i) => host.appendChild(buildRow(sec, i)));\n    updateTotal();\n  }\n\n  function sel(pairs, value, onChange, cls) {\n    const s = document.createElement("select");\n    if (cls) s.className = cls;\n    fillSelect(s, pairs, value);\n    s.addEventListener("change", () => onChange(s.value));\n    return s;\n  }\n  function lbl(text) {\n    const s = document.createElement("span");\n    s.className = "lbl"; s.textContent = text;\n    return s;\n  }\n\n  function buildRow(sec, i) {\n    const card = document.createElement("div");\n    card.className = "sec";\n\n    const l1 = document.createElement("div");\n    l1.className = "sec-line";\n\n    const nameSel = sel(SECTION_NAMES.map(n => [n, n]), sec.name, v => { sec.name = v; updateTotal(); }, "sec-name");\n    if (!SECTION_NAMES.includes(sec.name)) {\n      const o = document.createElement("option");\n      o.value = sec.name; o.textContent = sec.name; o.selected = true;\n      nameSel.appendChild(o);\n    }\n    l1.appendChild(nameSel);\n\n    l1.appendChild(lbl("Bars"));\n    l1.appendChild(sel([["1","1"],["2","2"],["4","4"],["8","8"],["12","12"],["16","16"]],\n      String(sec.bars), v => { sec.bars = Number(v); updateTotal(); }));\n\n    l1.appendChild(lbl("Beats/chord"));\n    l1.appendChild(sel([["1","1"],["2","2"],["4","4"]],\n      String(sec.beatsPerChord), v => { sec.beatsPerChord = Number(v); }));\n\n    l1.appendChild(lbl("Key"));\n    l1.appendChild(sel(KEY_NAMES.map((n, pc) => [String(pc), n]), String(sec.key),\n      v => { sec.key = Number(v); revalidate(); }));\n\n    l1.appendChild(lbl("Scale"));\n    l1.appendChild(sel(SCALES, sec.scale, v => { sec.scale = v; revalidate(); }));\n\n    const spacer1 = document.createElement("span");\n    spacer1.className = "spacer";\n    l1.appendChild(spacer1);\n\n    const up = document.createElement("button");\n    up.className = "icon"; up.textContent = "\u2191"; up.disabled = i === 0;\n    up.addEventListener("click", () => { [sections[i-1], sections[i]] = [sections[i], sections[i-1]]; render(); });\n    const down = document.createElement("button");\n    down.className = "icon"; down.textContent = "\u2193"; down.disabled = i === sections.length - 1;\n    down.addEventListener("click", () => { [sections[i+1], sections[i]] = [sections[i], sections[i+1]]; render(); });\n    const del = document.createElement("button");\n    del.className = "icon"; del.textContent = "\u2715";\n    del.addEventListener("click", () => { sections.splice(i, 1); render(); });\n    l1.append(up, down, del);\n\n    const l2 = document.createElement("div");\n    l2.className = "sec-line";\n\n    l2.appendChild(lbl("Progression"));\n    l2.appendChild(sel(TEMPLATES.map(t => [t, t]), sec.template, v => { sec.template = v; }));\n\n    const custom = document.createElement("input");\n    custom.type = "text"; custom.className = "custom";\n    custom.placeholder = "or custom: ii7 V7 Imaj7 \xB7 bVII \xB7 Dm7 G7";\n    custom.spellcheck = false; custom.value = sec.customProgression;\n    let t = null;\n    custom.addEventListener("input", () => {\n      sec.customProgression = custom.value.trim();\n      clearTimeout(t);\n      t = setTimeout(() => validateCustom(custom, sec), 250);\n    });\n    l2.appendChild(custom);\n\n    l2.appendChild(lbl("Rhythm"));\n    l2.appendChild(sel(RHYTHMS, sec.rhythm, v => { sec.rhythm = v; }));\n\n    l2.appendChild(lbl("Bass"));\n    l2.appendChild(sel(BASSES, sec.bass, v => { sec.bass = v; }));\n\n    function revalidate() { if (custom.value.trim()) validateCustom(custom, sec); }\n\n    card.append(l1, l2);\n    return card;\n  }\n\n  function updateTotal() {\n    const bars = sections.reduce((n, s) => n + s.bars, 0);\n    document.getElementById("total").textContent =\n      `${sections.length} section${sections.length === 1 ? "" : "s"} \xB7 ${bars} bars \xB7 ${bars * 4} beats`;\n  }\n\n  // \u2500\u2500 Form presets \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  // keyOff transposes relative to the global key; scale overrides global.\n  function S(name, bars, bpc, template, rhythm, bass, opts = {}) {\n    const gKey = Number(document.getElementById("g-key").value);\n    const gScale = document.getElementById("g-scale").value;\n    return {\n      name, bars, beatsPerChord: bpc, template, customProgression: opts.custom ?? "",\n      key: (gKey + (opts.keyOff ?? 0) + 12) % 12,\n      scale: opts.scale ?? gScale,\n      rhythm, bass,\n    };\n  }\n  const PRESETS = {\n    verse_chorus: () => [\n      S("Intro", 4, 2, "I-IV-V-I", "block", "none"),\n      S("Verse", 8, 2, "I-V-vi-IV", "quarters", "roots"),\n      S("Chorus", 8, 2, "I-IV-vi-V", "pump_8ths", "pump_8ths"),\n      S("Verse", 8, 2, "I-V-vi-IV", "quarters", "roots"),\n      S("Chorus", 8, 2, "I-IV-vi-V", "pump_8ths", "pump_8ths"),\n      S("Bridge", 4, 2, "vi-IV-I-V", "charleston", "root_fifth"),\n      S("Chorus", 8, 2, "I-IV-vi-V", "pump_8ths", "pump_8ths"),\n      S("Outro", 4, 4, "I-IV-V-I", "block", "roots"),\n    ],\n    aaba: () => {\n      document.getElementById("g-sevenths").checked = true;\n      return [\n        S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),\n        S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),\n        S("B", 8, 2, "Circle of fifths", "swung_8ths", "walking"),\n        S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),\n      ];\n    },\n    blues: () => {\n      document.getElementById("g-sevenths").checked = true;\n      return [\n        S("Chorus 1", 12, 4, "12-bar blues", "boom_chuck", "walking"),\n        S("Chorus 2", 12, 4, "12-bar blues", "boom_chuck", "walking"),\n      ];\n    },\n    edm: () => [\n      S("Intro", 8, 2, "vi-IV-I-V", "block", "none"),\n      S("Build", 8, 2, "vi-IV-I-V", "quarters", "pump_8ths"),\n      S("Drop", 8, 2, "I-V-vi-IV", "pump_8ths", "root_octave_8ths"),\n      S("Break", 4, 4, "vi-IV-I-V", "block", "none"),\n      S("Build", 4, 2, "vi-IV-I-V", "quarters", "pump_8ths"),\n      S("Drop", 8, 2, "I-V-vi-IV", "pump_8ths", "root_octave_8ths"),\n    ],\n    lofi: () => {\n      document.getElementById("g-sevenths").checked = true;\n      return [\n        S("Vamp", 4, 2, "ii-V-I", "tresillo", "roots"),\n        S("Vamp", 4, 2, "I-vi-IV-V", "tresillo", "roots"),\n        S("Vamp", 4, 2, "ii-V-I", "tresillo", "roots"),\n        S("Vamp", 4, 2, "vi-IV-I-V", "tresillo", "roots"),\n      ];\n    },\n  };\n\n  // \u2500\u2500 Wiring \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  document.addEventListener("DOMContentLoaded", () => {\n    fillSelect(document.getElementById("g-key"), KEY_NAMES.map((n, pc) => [String(pc), n]), String(init.key));\n    fillSelect(document.getElementById("g-scale"), SCALES, SCALES.some(([v]) => v === init.scale) ? init.scale : "major");\n\n    document.getElementById("preset").addEventListener("change", e => {\n      const make = PRESETS[e.target.value];\n      if (make) { sections = make(); render(); }\n      e.target.value = "";\n    });\n    document.getElementById("add").addEventListener("click", () => {\n      sections.push(defaultSection()); render();\n    });\n    document.getElementById("cancel").addEventListener("click", () => closeWithResult(null));\n    document.getElementById("write").addEventListener("click", () => {\n      if (sections.length === 0) { closeWithResult(null); return; }\n      closeWithResult({\n        action: "songform",\n        voicing: document.getElementById("g-voicing").value,\n        sevenths: document.getElementById("g-sevenths").checked,\n        bassOctave: Number(document.getElementById("g-bassoct").value),\n        sections,\n      });\n    });\n    document.addEventListener("keydown", e => {\n      if (e.key === "Escape") closeWithResult(null);\n    });\n\n    sections = [defaultSection()];\n    render();\n  });\n</script>\n</body>\n</html>\n';
+
 // src/extension.ts
 var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 var ABLETON_SCALE_MAP = {
@@ -5660,6 +5663,128 @@ function activate(activation) {
     })(arg).catch((e) => console.error(e))
   );
   context.ui.registerContextMenuAction("MidiClip", "Generate Bass Line\u2026", "aide.bassLine");
+  context.commands.registerCommand(
+    "aide.songForm",
+    (arg) => void (async (handle) => {
+      const clickedScene = context.getObjectFromHandle(handle, Scene);
+      const song = context.application.song;
+      if (!song) return;
+      const initKey = song.rootNote ?? 0;
+      const initScale = ABLETON_SCALE_MAP[song.scaleName ?? "Major"] ?? "major";
+      const htmlWithInit = songform_default.replace(
+        "</head>",
+        `<script>window._INIT={key:${initKey},scale:${JSON.stringify(initScale)}};</script></head>`
+      );
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(htmlWithInit)}`,
+        920,
+        640
+      );
+      let result;
+      try {
+        result = JSON.parse(rawResult);
+      } catch {
+        return;
+      }
+      if (!result || result.action !== "songform" || result.sections.length === 0) return;
+      const built = await Promise.all(result.sections.map(async (section) => {
+        const totalBeats = section.bars * 4;
+        const chordCount = Math.max(1, Math.floor(totalBeats / section.beatsPerChord));
+        let base;
+        const custom = section.customProgression.trim();
+        if (custom) {
+          const tokens = custom.split(/[\s,|]+/).filter(Boolean);
+          base = await Promise.all(
+            tokens.map((tok) => parseProgressionToken(engine, tok, section.key, section.scale))
+          );
+        } else {
+          const { chords: chords2 } = await engine.send("progression", {
+            key: section.key,
+            scale: section.scale,
+            template: section.template,
+            sevenths: result.sevenths
+          });
+          base = chords2;
+        }
+        const chords = [];
+        for (let i = 0; i < chordCount; i++) chords.push(base[i % base.length]);
+        const { voicings } = await engine.send("voice_progression", {
+          chords,
+          strategy: result.voicing,
+          octave: 4
+        });
+        const chordNotes = buildRhythmNotes(voicings, section.beatsPerChord, section.rhythm);
+        let bassNotes = null;
+        if (section.bass !== "none") {
+          const spans = chords.map((c, i) => ({
+            start: i * section.beatsPerChord,
+            span: section.beatsPerChord,
+            rootPc: c.root,
+            thirdIv: c.intervals[1] ?? 4,
+            fifthIv: c.intervals[2] ?? 7,
+            nextRootPc: chords[i + 1]?.root ?? null
+          }));
+          bassNotes = buildBassNotes(spans, section.bass, result.bassOctave);
+        }
+        const keyName = NOTE_NAMES[section.key] ?? "C";
+        return {
+          section,
+          totalBeats,
+          chordNotes,
+          bassNotes,
+          chordNames: [...new Set(chords.map((c) => c.name))],
+          color: keyLabelToColor(`${keyName} ${section.scale.replace(/_/g, " ")}`)
+        };
+      }));
+      const sceneIdx = song.scenes.findIndex(
+        (s) => s.handle.id === clickedScene.handle.id
+      );
+      const insertAt = sceneIdx >= 0 ? sceneIdx + 1 : song.scenes.length;
+      const midiTracks = song.tracks.filter(
+        (t) => t instanceof MidiTrack
+      );
+      const chordTrack = midiTracks[0];
+      const bassTrack = midiTracks[1];
+      if (!chordTrack) {
+        console.log("[composition-aide] No MIDI track found for the chord clips.");
+        return;
+      }
+      const wantsBass = built.some((b) => b.bassNotes);
+      if (wantsBass && !bassTrack) {
+        console.log("[composition-aide] Only one MIDI track \u2014 bass clips skipped (add a second MIDI track).");
+      }
+      for (let i = 0; i < built.length; i++) {
+        const b = built[i];
+        const slotIdx = insertAt + i;
+        const scene = await song.createScene(slotIdx);
+        const keyShort = keyLabelShort(
+          `${NOTE_NAMES[b.section.key] ?? "C"} ${b.section.scale.replace(/_/g, " ")}`
+        );
+        scene.name = `${b.section.name} \u2014 ${keyShort} \xB7 ${b.section.bars} bars`;
+        const chordSlot = chordTrack.clipSlots[slotIdx];
+        if (chordSlot) {
+          const clip = await chordSlot.createMidiClip(b.totalBeats);
+          clip.notes = b.chordNotes;
+          clip.name = `${b.section.name} \xB7 ${b.chordNames.join(" ")}`;
+          if (b.color !== null) clip.color = b.color;
+        }
+        if (b.bassNotes && bassTrack) {
+          const bassSlot = bassTrack.clipSlots[slotIdx];
+          if (bassSlot) {
+            const clip = await bassSlot.createMidiClip(b.totalBeats);
+            clip.notes = b.bassNotes;
+            clip.name = `${b.section.name} \xB7 Bass (${b.section.bass.replace(/_/g, " ")})`;
+            if (b.color !== null) clip.color = b.color;
+          }
+        }
+      }
+      const totalBars = built.reduce((n, b) => n + b.section.bars, 0);
+      console.log(
+        `[composition-aide] Song form: ${built.length} scenes, ${totalBars} bars (${built.map((b) => b.section.name).join(" \u2192 ")})`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("Scene", "Compose Song Form\u2026", "aide.songForm");
   context.commands.registerCommand(
     "aide.theoryMachine",
     (arg) => void (async (handle) => {

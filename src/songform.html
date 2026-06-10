@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Compose Song Form</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; }
+  input, button, select { font: inherit; }
+  :root {
+    --c-bg:           hsl(0,0%,21%);
+    --c-card:         hsl(0,0%,17%);
+    --c-control-bg:   hsl(0,0%,16%);
+    --c-control-bg-h: hsl(0,0%,13%);
+    --c-input-bg:     hsl(0,0%,12%);
+    --c-text:         hsl(0,0%,71%);
+    --c-text-dim:     hsl(0,0%,45%);
+    --c-border:       hsl(0,0%,7%);
+    --c-accent:       hsl(31,100%,67%);
+    --c-accent-fg:    hsl(0,0%,7%);
+    --c-bad:          hsl(0,65%,55%);
+  }
+  html { background: var(--c-bg); color: var(--c-text); font-family: "AbletonSansSmall", sans-serif; font-size: 11.5px; font-weight: 500; -webkit-font-smoothing: antialiased; }
+  body { padding: 1em 1.25em; display: flex; flex-direction: column; gap: 0.7em; height: 100vh; }
+  .title-row { display: flex; align-items: center; gap: 1em; }
+  .title { font-size: 1.15em; }
+  .spacer { flex: 1; }
+  select, input[type="text"], input[type="number"] {
+    background: var(--c-input-bg); color: var(--c-text);
+    border: 1px solid var(--c-border); height: 20px; padding: 0 0.3em;
+  }
+  select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+  select:focus, input:focus { outline: 2px solid var(--c-text-dim); }
+  label.inline { display: flex; align-items: center; gap: 0.35em; color: var(--c-text-dim); white-space: nowrap; }
+  label.inline input[type="checkbox"] { accent-color: var(--c-accent); width: 12px; height: 12px; }
+  .globals { display: flex; align-items: center; gap: 0.9em; flex-wrap: wrap; }
+
+  #sections { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.45em; padding-right: 2px; }
+  .sec {
+    background: var(--c-card); border: 1px solid var(--c-border);
+    padding: 0.5em 0.6em; display: flex; flex-direction: column; gap: 0.4em;
+  }
+  .sec-line { display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; }
+  .sec-name { width: 7em; }
+  .sec input.custom { flex: 1; min-width: 12em; }
+  .lbl { color: var(--c-text-dim); white-space: nowrap; }
+  .sec button.icon {
+    width: 22px; height: 20px; line-height: 1; padding: 0;
+    background: var(--c-control-bg); color: var(--c-text);
+    border: 1px solid var(--c-border); cursor: pointer; border-radius: 3px;
+  }
+  .sec button.icon:hover { background: var(--c-control-bg-h); }
+  .sec input.custom.bad { border-color: var(--c-bad); color: var(--c-bad); }
+
+  .footer { display: flex; align-items: center; gap: 0.75em; }
+  #total { color: var(--c-text-dim); }
+  button.btn {
+    font-size: 1rem; line-height: 1; background: var(--c-control-bg); color: var(--c-text);
+    border: 1px solid var(--c-border); height: 22px; padding: 0 1.1em;
+    border-radius: 1em; cursor: pointer; white-space: nowrap;
+  }
+  button.btn:hover { background: var(--c-control-bg-h); }
+  button.btn.primary { background: var(--c-accent); color: var(--c-accent-fg); border-color: var(--c-accent); }
+  button.btn.primary:hover { filter: brightness(1.08); }
+</style>
+</head>
+<body>
+  <div class="title-row">
+    <span class="title">Compose Song Form</span>
+    <span class="spacer"></span>
+    <span class="lbl">Form</span>
+    <select id="preset">
+      <option value="">Load a form…</option>
+      <option value="verse_chorus">Verse–Chorus (pop)</option>
+      <option value="aaba">AABA (32-bar)</option>
+      <option value="blues">12-Bar Blues ×2</option>
+      <option value="edm">EDM Arc</option>
+      <option value="lofi">Lo-fi Vamp Set</option>
+    </select>
+  </div>
+
+  <div class="globals">
+    <span class="lbl">Key</span>
+    <select id="g-key"></select>
+    <span class="lbl">Scale</span>
+    <select id="g-scale"></select>
+    <span class="lbl">Voicing</span>
+    <select id="g-voicing">
+      <option value="smooth">Smooth</option>
+      <option value="close">Close</option>
+      <option value="drop2">Drop 2</option>
+      <option value="shell">Shell</option>
+    </select>
+    <label class="inline"><input type="checkbox" id="g-sevenths" /> 7ths</label>
+    <span class="lbl">Bass register</span>
+    <select id="g-bassoct">
+      <option value="1">Low</option>
+      <option value="2" selected>Standard</option>
+      <option value="3">High</option>
+    </select>
+  </div>
+
+  <div id="sections"></div>
+
+  <div class="footer">
+    <button class="btn" id="add">+ Add Section</button>
+    <span id="total"></span>
+    <span class="spacer"></span>
+    <button class="btn" id="cancel">Cancel</button>
+    <button class="btn primary" id="write">Write to Session</button>
+  </div>
+
+<script>
+  const isWebKit = window.webkit?.messageHandlers?.live;
+  const isWebView2 = window.chrome?.webview;
+  function closeWithResult(result) {
+    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
+    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
+    else if (isWebView2) window.chrome.webview.postMessage(msg);
+  }
+
+  const KEY_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const SCALES = [
+    ["major","Major"],["natural_minor","Natural Minor"],["harmonic_minor","Harmonic Minor"],
+    ["melodic_minor","Melodic Minor"],["dorian","Dorian"],["phrygian","Phrygian"],
+    ["lydian","Lydian"],["mixolydian","Mixolydian"],
+  ];
+  const TEMPLATES = ["I-V-vi-IV","I-IV-V-I","I-vi-IV-V","vi-IV-I-V","ii-V-I","I-IV-vi-V",
+    "I-V-IV-V","I-iii-IV-V","12-bar blues","Andalusian cadence","Pachelbel","Circle of fifths"];
+  const RHYTHMS = [
+    ["block","Block Chords"],["halves","Halves"],["quarters","Quarters"],["pump_8ths","Pumping 8ths"],
+    ["swung_8ths","Swung 8ths"],["charleston","Charleston"],["tresillo","Tresillo"],
+    ["boom_chuck","Boom-Chuck"],["syncopated","Syncopated"],["offbeats","Offbeat Skank"],
+    ["arp_up_8ths","Arpeggio Up"],
+  ];
+  const BASSES = [
+    ["none","No bass"],["roots","Roots"],["root_fifth","Root–Fifth"],["pump_8ths","Pumping 8ths"],
+    ["root_octave_8ths","Octave 8ths"],["walking","Walking"],["tresillo","Tresillo"],["offbeats","Offbeats"],
+  ];
+  const SECTION_NAMES = ["Intro","Verse","Chorus","Bridge","Build","Drop","Break","Outro","Vamp","A","B"];
+
+  const init = window._INIT ?? { key: 0, scale: "major" };
+  let sections = [];
+
+  function fillSelect(sel, pairs, value) {
+    sel.innerHTML = "";
+    for (const [v, label] of pairs) {
+      const o = document.createElement("option");
+      o.value = v; o.textContent = label;
+      if (v === value) o.selected = true;
+      sel.appendChild(o);
+    }
+  }
+
+  function defaultSection() {
+    return {
+      name: "Verse", bars: 4, beatsPerChord: 2,
+      key: Number(document.getElementById("g-key").value),
+      scale: document.getElementById("g-scale").value,
+      template: "I-V-vi-IV", customProgression: "",
+      rhythm: "block", bass: "none",
+    };
+  }
+
+  // ── Engine validation for custom progressions (best-effort) ─────────────
+  const ENGINE = "http://127.0.0.1:7842";
+  const ROMAN_RE = /^[b#♭♯]?[ivIV]/;
+  async function engineOp(op, params) {
+    const r = await fetch(ENGINE, { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op, ...params }) });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    return data.result;
+  }
+  async function validateCustom(inputEl, sec) {
+    const text = inputEl.value.trim();
+    if (!text) { inputEl.classList.remove("bad"); inputEl.title = ""; return; }
+    const tokens = text.split(/[\s,|]+/).filter(Boolean);
+    try {
+      const names = await Promise.all(tokens.map(async tok => {
+        const roman = () => engineOp("parse_roman", { roman: tok, key: sec.key, scale: sec.scale });
+        const name  = () => engineOp("parse_chord", { name: tok });
+        const [a, b] = ROMAN_RE.test(tok) ? [roman, name] : [name, roman];
+        try { return (await a()).chord.name; } catch { return (await b()).chord.name; }
+      }));
+      inputEl.classList.remove("bad");
+      inputEl.title = names.join(" – ");
+    } catch (e) {
+      if (e instanceof TypeError) return; // engine HTTP unreachable — skip
+      inputEl.classList.add("bad");
+      inputEl.title = String(e.message || e);
+    }
+  }
+
+  // ── Section rows ─────────────────────────────────────────────────────────
+  function render() {
+    const host = document.getElementById("sections");
+    host.innerHTML = "";
+    sections.forEach((sec, i) => host.appendChild(buildRow(sec, i)));
+    updateTotal();
+  }
+
+  function sel(pairs, value, onChange, cls) {
+    const s = document.createElement("select");
+    if (cls) s.className = cls;
+    fillSelect(s, pairs, value);
+    s.addEventListener("change", () => onChange(s.value));
+    return s;
+  }
+  function lbl(text) {
+    const s = document.createElement("span");
+    s.className = "lbl"; s.textContent = text;
+    return s;
+  }
+
+  function buildRow(sec, i) {
+    const card = document.createElement("div");
+    card.className = "sec";
+
+    const l1 = document.createElement("div");
+    l1.className = "sec-line";
+
+    const nameSel = sel(SECTION_NAMES.map(n => [n, n]), sec.name, v => { sec.name = v; updateTotal(); }, "sec-name");
+    if (!SECTION_NAMES.includes(sec.name)) {
+      const o = document.createElement("option");
+      o.value = sec.name; o.textContent = sec.name; o.selected = true;
+      nameSel.appendChild(o);
+    }
+    l1.appendChild(nameSel);
+
+    l1.appendChild(lbl("Bars"));
+    l1.appendChild(sel([["1","1"],["2","2"],["4","4"],["8","8"],["12","12"],["16","16"]],
+      String(sec.bars), v => { sec.bars = Number(v); updateTotal(); }));
+
+    l1.appendChild(lbl("Beats/chord"));
+    l1.appendChild(sel([["1","1"],["2","2"],["4","4"]],
+      String(sec.beatsPerChord), v => { sec.beatsPerChord = Number(v); }));
+
+    l1.appendChild(lbl("Key"));
+    l1.appendChild(sel(KEY_NAMES.map((n, pc) => [String(pc), n]), String(sec.key),
+      v => { sec.key = Number(v); revalidate(); }));
+
+    l1.appendChild(lbl("Scale"));
+    l1.appendChild(sel(SCALES, sec.scale, v => { sec.scale = v; revalidate(); }));
+
+    const spacer1 = document.createElement("span");
+    spacer1.className = "spacer";
+    l1.appendChild(spacer1);
+
+    const up = document.createElement("button");
+    up.className = "icon"; up.textContent = "↑"; up.disabled = i === 0;
+    up.addEventListener("click", () => { [sections[i-1], sections[i]] = [sections[i], sections[i-1]]; render(); });
+    const down = document.createElement("button");
+    down.className = "icon"; down.textContent = "↓"; down.disabled = i === sections.length - 1;
+    down.addEventListener("click", () => { [sections[i+1], sections[i]] = [sections[i], sections[i+1]]; render(); });
+    const del = document.createElement("button");
+    del.className = "icon"; del.textContent = "✕";
+    del.addEventListener("click", () => { sections.splice(i, 1); render(); });
+    l1.append(up, down, del);
+
+    const l2 = document.createElement("div");
+    l2.className = "sec-line";
+
+    l2.appendChild(lbl("Progression"));
+    l2.appendChild(sel(TEMPLATES.map(t => [t, t]), sec.template, v => { sec.template = v; }));
+
+    const custom = document.createElement("input");
+    custom.type = "text"; custom.className = "custom";
+    custom.placeholder = "or custom: ii7 V7 Imaj7 · bVII · Dm7 G7";
+    custom.spellcheck = false; custom.value = sec.customProgression;
+    let t = null;
+    custom.addEventListener("input", () => {
+      sec.customProgression = custom.value.trim();
+      clearTimeout(t);
+      t = setTimeout(() => validateCustom(custom, sec), 250);
+    });
+    l2.appendChild(custom);
+
+    l2.appendChild(lbl("Rhythm"));
+    l2.appendChild(sel(RHYTHMS, sec.rhythm, v => { sec.rhythm = v; }));
+
+    l2.appendChild(lbl("Bass"));
+    l2.appendChild(sel(BASSES, sec.bass, v => { sec.bass = v; }));
+
+    function revalidate() { if (custom.value.trim()) validateCustom(custom, sec); }
+
+    card.append(l1, l2);
+    return card;
+  }
+
+  function updateTotal() {
+    const bars = sections.reduce((n, s) => n + s.bars, 0);
+    document.getElementById("total").textContent =
+      `${sections.length} section${sections.length === 1 ? "" : "s"} · ${bars} bars · ${bars * 4} beats`;
+  }
+
+  // ── Form presets ──────────────────────────────────────────────────────────
+  // keyOff transposes relative to the global key; scale overrides global.
+  function S(name, bars, bpc, template, rhythm, bass, opts = {}) {
+    const gKey = Number(document.getElementById("g-key").value);
+    const gScale = document.getElementById("g-scale").value;
+    return {
+      name, bars, beatsPerChord: bpc, template, customProgression: opts.custom ?? "",
+      key: (gKey + (opts.keyOff ?? 0) + 12) % 12,
+      scale: opts.scale ?? gScale,
+      rhythm, bass,
+    };
+  }
+  const PRESETS = {
+    verse_chorus: () => [
+      S("Intro", 4, 2, "I-IV-V-I", "block", "none"),
+      S("Verse", 8, 2, "I-V-vi-IV", "quarters", "roots"),
+      S("Chorus", 8, 2, "I-IV-vi-V", "pump_8ths", "pump_8ths"),
+      S("Verse", 8, 2, "I-V-vi-IV", "quarters", "roots"),
+      S("Chorus", 8, 2, "I-IV-vi-V", "pump_8ths", "pump_8ths"),
+      S("Bridge", 4, 2, "vi-IV-I-V", "charleston", "root_fifth"),
+      S("Chorus", 8, 2, "I-IV-vi-V", "pump_8ths", "pump_8ths"),
+      S("Outro", 4, 4, "I-IV-V-I", "block", "roots"),
+    ],
+    aaba: () => {
+      document.getElementById("g-sevenths").checked = true;
+      return [
+        S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),
+        S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),
+        S("B", 8, 2, "Circle of fifths", "swung_8ths", "walking"),
+        S("A", 8, 2, "ii-V-I", "swung_8ths", "walking"),
+      ];
+    },
+    blues: () => {
+      document.getElementById("g-sevenths").checked = true;
+      return [
+        S("Chorus 1", 12, 4, "12-bar blues", "boom_chuck", "walking"),
+        S("Chorus 2", 12, 4, "12-bar blues", "boom_chuck", "walking"),
+      ];
+    },
+    edm: () => [
+      S("Intro", 8, 2, "vi-IV-I-V", "block", "none"),
+      S("Build", 8, 2, "vi-IV-I-V", "quarters", "pump_8ths"),
+      S("Drop", 8, 2, "I-V-vi-IV", "pump_8ths", "root_octave_8ths"),
+      S("Break", 4, 4, "vi-IV-I-V", "block", "none"),
+      S("Build", 4, 2, "vi-IV-I-V", "quarters", "pump_8ths"),
+      S("Drop", 8, 2, "I-V-vi-IV", "pump_8ths", "root_octave_8ths"),
+    ],
+    lofi: () => {
+      document.getElementById("g-sevenths").checked = true;
+      return [
+        S("Vamp", 4, 2, "ii-V-I", "tresillo", "roots"),
+        S("Vamp", 4, 2, "I-vi-IV-V", "tresillo", "roots"),
+        S("Vamp", 4, 2, "ii-V-I", "tresillo", "roots"),
+        S("Vamp", 4, 2, "vi-IV-I-V", "tresillo", "roots"),
+      ];
+    },
+  };
+
+  // ── Wiring ────────────────────────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", () => {
+    fillSelect(document.getElementById("g-key"), KEY_NAMES.map((n, pc) => [String(pc), n]), String(init.key));
+    fillSelect(document.getElementById("g-scale"), SCALES, SCALES.some(([v]) => v === init.scale) ? init.scale : "major");
+
+    document.getElementById("preset").addEventListener("change", e => {
+      const make = PRESETS[e.target.value];
+      if (make) { sections = make(); render(); }
+      e.target.value = "";
+    });
+    document.getElementById("add").addEventListener("click", () => {
+      sections.push(defaultSection()); render();
+    });
+    document.getElementById("cancel").addEventListener("click", () => closeWithResult(null));
+    document.getElementById("write").addEventListener("click", () => {
+      if (sections.length === 0) { closeWithResult(null); return; }
+      closeWithResult({
+        action: "songform",
+        voicing: document.getElementById("g-voicing").value,
+        sevenths: document.getElementById("g-sevenths").checked,
+        bassOctave: Number(document.getElementById("g-bassoct").value),
+        sections,
+      });
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeWithResult(null);
+    });
+
+    sections = [defaultSection()];
+    render();
+  });
+</script>
+</body>
+</html>

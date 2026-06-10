@@ -22,6 +22,7 @@ import compatibleHtml from "./compatible.html";
 import transposesessionHtml from "./transposesession.html";
 import theoryMachineHtml from "./theory-machine.html";
 import bassHtml from "./bass.html";
+import songformHtml from "./songform.html";
 
 // ── Wire-format types ────────────────────────────────────────────────────────
 
@@ -112,6 +113,26 @@ type KeyInfo = { root: number; scale: string; label: string };
 type TransposeModalResult = { action: "transpose"; semitones: number };
 
 type BassModalResult = { action: "bass"; pattern: string; octave: number };
+
+interface SongFormSection {
+  name: string;
+  bars: number;
+  beatsPerChord: number;
+  key: number;
+  scale: string;
+  template: string;
+  customProgression: string;
+  rhythm: string;
+  bass: string; // "none" or a bass pattern name
+}
+
+interface SongFormResult {
+  action: "songform";
+  voicing: string;
+  sevenths: boolean;
+  bassOctave: number;
+  sections: SongFormSection[];
+}
 
 type SessionTransposeResult = { action: "transpose"; semitones: number; recolor: boolean };
 
@@ -1989,6 +2010,158 @@ export function activate(activation: ActivationContext) {
   );
 
   context.ui.registerContextMenuAction("MidiClip", "Generate Bass Line…", "aide.bassLine");
+
+  // ── Compose Song Form ────────────────────────────────────────────────────
+
+  context.commands.registerCommand("aide.songForm", (arg: unknown) =>
+    void (async (handle: Handle) => {
+      const clickedScene = context.getObjectFromHandle(handle, Scene);
+      const song = context.application.song;
+      if (!song) return;
+
+      const initKey = song.rootNote ?? 0;
+      const initScale = ABLETON_SCALE_MAP[song.scaleName ?? "Major"] ?? "major";
+      const htmlWithInit = songformHtml.replace(
+        "</head>",
+        `<script>window._INIT={key:${initKey},scale:${JSON.stringify(initScale)}};<\/script></head>`,
+      );
+
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(htmlWithInit)}`,
+        920, 640,
+      );
+
+      let result: SongFormResult | null;
+      try { result = JSON.parse(rawResult) as SongFormResult | null; }
+      catch { return; }
+      if (!result || result.action !== "songform" || result.sections.length === 0) return;
+
+      // Build all section content up front so a late failure doesn't leave a
+      // half-written form in the session
+      interface BuiltSection {
+        section: SongFormSection;
+        totalBeats: number;
+        chordNotes: NoteDescription[];
+        bassNotes: NoteDescription[] | null;
+        chordNames: string[];
+        color: number | null;
+      }
+
+      const built: BuiltSection[] = await Promise.all(result.sections.map(async section => {
+        const totalBeats = section.bars * 4;
+        const chordCount = Math.max(1, Math.floor(totalBeats / section.beatsPerChord));
+
+        // Base progression: custom Roman numerals / chord names, or template
+        let base: ChordJson[];
+        const custom = section.customProgression.trim();
+        if (custom) {
+          const tokens = custom.split(/[\s,|]+/).filter(Boolean);
+          base = await Promise.all(
+            tokens.map(tok => parseProgressionToken(engine, tok, section.key, section.scale)),
+          );
+        } else {
+          const { chords } = await engine.send<{ chords: ChordJson[] }>("progression", {
+            key: section.key,
+            scale: section.scale,
+            template: section.template,
+            sevenths: result.sevenths,
+          });
+          base = chords;
+        }
+
+        // Cycle the progression to fill the section
+        const chords: ChordJson[] = [];
+        for (let i = 0; i < chordCount; i++) chords.push(base[i % base.length] as ChordJson);
+
+        const { voicings } = await engine.send<{ voicings: number[][] }>("voice_progression", {
+          chords,
+          strategy: result.voicing,
+          octave: 4,
+        });
+
+        const chordNotes = buildRhythmNotes(voicings, section.beatsPerChord, section.rhythm);
+
+        let bassNotes: NoteDescription[] | null = null;
+        if (section.bass !== "none") {
+          const spans: BassChordSpan[] = chords.map((c, i) => ({
+            start: i * section.beatsPerChord,
+            span: section.beatsPerChord,
+            rootPc: c.root,
+            thirdIv: c.intervals[1] ?? 4,
+            fifthIv: c.intervals[2] ?? 7,
+            nextRootPc: chords[i + 1]?.root ?? null,
+          }));
+          bassNotes = buildBassNotes(spans, section.bass, result.bassOctave);
+        }
+
+        const keyName = NOTE_NAMES[section.key] ?? "C";
+        return {
+          section,
+          totalBeats,
+          chordNotes,
+          bassNotes,
+          chordNames: [...new Set(chords.map(c => c.name))],
+          color: keyLabelToColor(`${keyName} ${section.scale.replace(/_/g, " ")}`),
+        };
+      }));
+
+      // Insert below the clicked scene; fall back to the end of the session
+      const sceneIdx = song.scenes.findIndex(
+        s => s.handle.id === clickedScene.handle.id,
+      );
+      const insertAt = sceneIdx >= 0 ? sceneIdx + 1 : song.scenes.length;
+
+      const midiTracks = song.tracks.filter(
+        (t): t is MidiTrack<"1.0.0"> => t instanceof MidiTrack,
+      );
+      const chordTrack = midiTracks[0];
+      const bassTrack = midiTracks[1];
+      if (!chordTrack) {
+        console.log("[composition-aide] No MIDI track found for the chord clips.");
+        return;
+      }
+      const wantsBass = built.some(b => b.bassNotes);
+      if (wantsBass && !bassTrack) {
+        console.log("[composition-aide] Only one MIDI track — bass clips skipped (add a second MIDI track).");
+      }
+
+      for (let i = 0; i < built.length; i++) {
+        const b = built[i] as BuiltSection;
+        const slotIdx = insertAt + i;
+        const scene = await song.createScene(slotIdx);
+        const keyShort = keyLabelShort(
+          `${NOTE_NAMES[b.section.key] ?? "C"} ${b.section.scale.replace(/_/g, " ")}`,
+        );
+        scene.name = `${b.section.name} — ${keyShort} · ${b.section.bars} bars`;
+
+        const chordSlot = chordTrack.clipSlots[slotIdx];
+        if (chordSlot) {
+          const clip = await chordSlot.createMidiClip(b.totalBeats);
+          clip.notes = b.chordNotes;
+          clip.name = `${b.section.name} · ${b.chordNames.join(" ")}`;
+          if (b.color !== null) clip.color = b.color;
+        }
+
+        if (b.bassNotes && bassTrack) {
+          const bassSlot = bassTrack.clipSlots[slotIdx];
+          if (bassSlot) {
+            const clip = await bassSlot.createMidiClip(b.totalBeats);
+            clip.notes = b.bassNotes;
+            clip.name = `${b.section.name} · Bass (${b.section.bass.replace(/_/g, " ")})`;
+            if (b.color !== null) clip.color = b.color;
+          }
+        }
+      }
+
+      const totalBars = built.reduce((n, b) => n + b.section.bars, 0);
+      console.log(
+        `[composition-aide] Song form: ${built.length} scenes, ${totalBars} bars ` +
+        `(${built.map(b => b.section.name).join(" → ")})`,
+      );
+    })(arg as Handle).catch(e => console.error(e)),
+  );
+
+  context.ui.registerContextMenuAction("Scene", "Compose Song Form…", "aide.songForm");
 
   // ── Theory Machine ───────────────────────────────────────────────────────
 
