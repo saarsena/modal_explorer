@@ -372,7 +372,9 @@ export function activate(activation: ActivationContext) {
   const cwd = process.env["COMPOSITION_AIDE_PATH"]
     ?? path.join(__dirname, "..", "engine");
 
-  const pythonCmd = process.env["PYTHON_CMD"] ?? "python";
+  // macOS and Linux ship "python3" only; "python" exists on Windows
+  const pythonCmd = process.env["PYTHON_CMD"]
+    ?? (process.platform === "win32" ? "python" : "python3");
   const engine = new ChordgenEngine(cwd, pythonCmd);
   void engine.send("list_ops").catch(() => undefined);
 

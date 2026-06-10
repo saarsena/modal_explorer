@@ -1,149 +1,64 @@
 # Composition Aide
 
-A music theory extension for Ableton Live built on the [Extensions SDK](https://github.com/Ableton/extension-sdk) (1.0.0-beta.0). Composition Aide adds harmonic intelligence directly into Live's context menus — generate voiced progressions, analyze harmony, explore modes, find compatible clips, and get a per-chord improv guide including upper structure triads and frequency references for spectral work.
+A music theory extension for Ableton Live built on the Ableton Extensions SDK (1.0.0-beta.0). Composition Aide adds harmonic intelligence directly into Live's context menus — generate voiced progressions, analyze harmony, explore modes, find compatible clips, and get a per-chord improv guide including upper structure triads and frequency references for spectral work.
 
-All theory operations are handled by a local Python engine (`chordgen`) that runs as a subprocess alongside Live. No cloud, no latency.
+All theory operations are handled by a local Python engine that ships **inside the extension** and runs as a subprocess alongside Live. No cloud, no latency, no pip installs.
 
----
-
-## What you need before you start
-
-### 1. Ableton Live 12 Beta + Extensions SDK
-
-This extension runs on Ableton's **Extensions platform**, which is currently in closed beta. You need:
-
-- **Ableton Live 12 Beta** — the Extensions-enabled beta build, available from Centercode (the Ableton beta program). Regular Live 12 does **not** include the Extension Host.
-- **The Extensions SDK zip** — also from Centercode. Extract it somewhere on your machine; you'll need it in Step 3.
-
-If you're not in the beta yet, ask in the Ableton Discord (#extensions channel) — there's an active community there.
-
-### 2. Enable Developer Mode in Live
-
-Open Live, go to **Preferences → Extensions**, and turn on **Developer Mode**. Without this, the extension runner can't connect to Live.
-
-### 3. Node.js 24.14.1 or newer
-
-The extension launcher requires Node.js ≥ 24.14.1. Download from [nodejs.org](https://nodejs.org) if you don't have it. Check your version with `node --version`.
-
-### 4. Python 3.9 or newer
-
-The theory engine runs as a local Python subprocess. No packages to install — pure standard library.
-
-- **Mac:** Usually already installed. Run `python3 --version` in Terminal to check.
-- **Windows:** Download from [python.org](https://www.python.org/downloads/). During install, tick **"Add Python to PATH"**.
+![theory-machine.html](example.png)
 
 ---
 
-## Setup
+## Requirements
 
-### Step 1 — Get the repo
+| | |
+|---|---|
+| **Ableton Live** | A Live build with the **Extensions platform** (currently in closed beta via Centercode). Regular Live releases do **not** include the Extension Host. Not in the beta yet? Ask in the Ableton Discord `#extensions` channel. |
+| **Python 3.9+** | The theory engine is pure Python standard library — no packages to install. See per-OS notes below. |
 
-```bash
-git clone https://github.com/saarsena/modal_explorer
-cd modal_explorer
-```
-
-Or download the zip from GitHub and unzip it somewhere you'll remember.
-
-### Step 2 — Copy the SDK packages into the repo
-
-`npm install` needs the two SDK packages from your extracted SDK zip. Copy them into the repo root:
-
-```
-extensions-sdk-1.0.0-beta.0/
-  ableton-extensions-sdk-1.0.0-beta.0.tgz   ← copy this
-  ableton-extensions-cli-1.0.0-beta.0.tgz   ← and this
-  ...
-
-modal_explorer/
-  ableton-extensions-sdk-1.0.0-beta.0.tgz   ← paste here
-  ableton-extensions-cli-1.0.0-beta.0.tgz   ← and here
-  package.json
-  ...
-```
-
-Then update `package.json` so the paths point to the local copies (change `../../` to `./`):
-
-```json
-"@ableton-extensions/sdk": "file:./ableton-extensions-sdk-1.0.0-beta.0.tgz",
-"@ableton-extensions/cli": "file:./ableton-extensions-cli-1.0.0-beta.0.tgz"
-```
-
-Then install:
-
-```bash
-npm install
-```
-
-### Step 3 — Tell the extension where Live is
-
-`ExtensionHostNodeModule.node` is a file that ships **inside Ableton Live** (not the SDK). The path depends on your OS:
-
-- **Windows:** `C:\ProgramData\Ableton\Live 12 Beta\Program\ExtensionHost\ExtensionHostNodeModule.node`
-- **Mac:** inside the Live app bundle, typically `/Applications/Ableton Live 12 Beta.app/Contents/Frameworks/ExtensionHostNodeModule.node` — if you're unsure, run `find /Applications -name "ExtensionHostNodeModule.node"` in Terminal.
-
-Copy the example config file and set that path:
-
-```bash
-# Mac / Linux
-cp .env.example .env
-
-# Windows (PowerShell)
-Copy-Item .env.example .env
-```
-
-Open `.env` and set `EXTENSION_HOST_PATH`:
-
-```
-# Windows example
-EXTENSION_HOST_PATH=C:\ProgramData\Ableton\Live 12 Beta\Program\ExtensionHost\ExtensionHostNodeModule.node
-
-# Mac example
-EXTENSION_HOST_PATH=/Applications/Ableton Live 12 Beta.app/Contents/Frameworks/ExtensionHostNodeModule.node
-```
-
-<details>
-<summary>Optional overrides</summary>
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `COMPOSITION_AIDE_PATH` | `engine/` (in repo) | Override the Python engine directory |
-| `PYTHON_CMD` | `python` | Use `python3` or a full path if `python` isn't in your PATH |
-
-</details>
-
-### Step 4 — Run it
-
-Make sure Live is open and Developer Mode is on, then from the repo folder:
-
-```bash
-npm start
-```
-
-This builds the extension and loads it into Live. You'll see the Composition Aide commands appear in Live's context menus.
-
-> **Stuck?** The most common issues: (1) wrong `EXTENSION_HOST_PATH` — double-check the path exists and you saved `.env` not `.env.example`; (2) Developer Mode is off — check Preferences → Extensions; (3) Node.js version too old — `node --version` should be ≥ 24.14.1.
-
-> **FYI:** While the extension is running, you can open `src/theory-machine.html` directly in your browser (drag it onto a browser window or use File → Open). It connects to the local theory engine automatically and works as a full standalone web app — nice to have open on a second screen while you work in Live.
+That's it for regular use. Node.js is only needed if you're [building from source](#building-from-source).
 
 ---
 
-### For contributors / development
+## Install (the easy way)
+
+1. Download **`Composition-Aide-x.y.z.ablx`** from the [Releases page](https://github.com/saarsena/modal_explorer/releases).
+2. Open Live, go to **Settings → Extensions**, and drop the `.ablx` file onto that page.
+3. Make sure Python 3 is available (one-time check, see below).
+4. Right-click a MIDI clip, clip slot, or scene — the Composition Aide commands appear in the context menu.
+
+### Python check — macOS
+
+Open **Terminal** (Cmd+Space, type "Terminal") and run:
 
 ```bash
-# (after copying the .tgz files and updating package.json paths as above)
-npm install
-npm run build   # TypeScript compile + bundle → dist/extension.js
-npm start       # build + run
+python3 --version
 ```
+
+- If it prints a version (3.9 or newer) — you're done.
+- If macOS pops up a dialog offering to install **"command line developer tools"** — click **Install**, wait for it to finish (a few minutes, one time only), then restart Live.
+- Alternatively, install Python from [python.org](https://www.python.org/downloads/) — the standard installer works fine.
+
+### Python check — Windows
+
+Open **PowerShell** and run:
+
+```powershell
+python --version
+```
+
+If that fails, install Python from [python.org](https://www.python.org/downloads/) and tick **"Add Python to PATH"** during install (or install Python from the Microsoft Store, which sets up PATH automatically). Then restart Live.
+
+### Troubleshooting
+
+- **Commands appear but do nothing / dialogs show an engine error** → Python isn't on your PATH. Run the version check above in a fresh terminal. If you have Python somewhere unusual, set the `PYTHON_CMD` environment variable to its full path before launching Live.
+- **Commands don't appear at all** → your Live build doesn't include the Extension Host, or the extension didn't install. Check **Settings → Extensions** lists Composition Aide.
+- **It worked, then stopped after a Python update** → restart Live so the engine subprocess respawns against the new interpreter.
 
 ---
 
 ## Features
 
-Features are invoked from Live's context menu. All context menus are non-destructive unless noted.
-
-![theory-machine.html](example.png)
+Features are invoked from Live's context menu. All commands are non-destructive unless noted.
 
 ### Generate
 
@@ -208,9 +123,111 @@ Each upper structure triad shows its three note names and Hz values — useful a
 
 ---
 
+## Building from source
+
+Only needed if you want to hack on the extension. If you just want to use it, [install the `.ablx`](#install-the-easy-way) instead.
+
+### Prerequisites
+
+- Everything from [Requirements](#requirements) above
+- **Node.js ≥ 24.14.1** — check with `node --version`, download from [nodejs.org](https://nodejs.org)
+- **The Extensions SDK zip** from Centercode — you need the two `.tgz` packages inside it
+- **Developer Mode enabled in Live** — Settings → Extensions → Developer Mode (required for `npm start` to connect)
+
+### Step 1 — Get the repo
+
+```bash
+git clone https://github.com/saarsena/modal_explorer
+cd modal_explorer
+```
+
+### Step 2 — Install dependencies
+
+`npm install` needs the two SDK packages that came with your Centercode download. When you extracted the SDK zip, they're sitting in the root of that folder:
+
+```
+extensions-sdk-1.0.0-beta.0/        ← the folder you extracted from Centercode
+  ableton-extensions-sdk-1.0.0-beta.0.tgz
+  ableton-extensions-cli-1.0.0-beta.0.tgz
+  ...
+```
+
+Copy both `.tgz` files into the repo folder (next to `package.json`), then open `package.json` and point the two file references at them:
+
+```json
+"@ableton-extensions/sdk": "file:./ableton-extensions-sdk-1.0.0-beta.0.tgz",
+"@ableton-extensions/cli": "file:./ableton-extensions-cli-1.0.0-beta.0.tgz"
+```
+
+Then run:
+
+```bash
+npm install
+```
+
+### Step 3 — Tell the runner where Live is
+
+`ExtensionHostNodeModule.node` is a file that ships **inside Ableton Live** (not the SDK). The path depends on your OS:
+
+- **Windows:** `C:\ProgramData\Ableton\Live 12 Beta\Program\ExtensionHost\ExtensionHostNodeModule.node`
+- **Mac:** inside the Live app bundle, typically `/Applications/Ableton Live 12 Beta.app/Contents/Frameworks/ExtensionHostNodeModule.node` — if you're unsure, run `find /Applications -name "ExtensionHostNodeModule.node"` in Terminal.
+
+Copy the example config file and set that path:
+
+```bash
+# Mac / Linux
+cp .env.example .env
+
+# Windows (PowerShell)
+Copy-Item .env.example .env
+```
+
+Open `.env` and set `EXTENSION_HOST_PATH`:
+
+```
+# Windows example
+EXTENSION_HOST_PATH=C:\ProgramData\Ableton\Live 12 Beta\Program\ExtensionHost\ExtensionHostNodeModule.node
+
+# Mac example
+EXTENSION_HOST_PATH=/Applications/Ableton Live 12 Beta.app/Contents/Frameworks/ExtensionHostNodeModule.node
+```
+
+### Step 4 — Run it
+
+Make sure Live is open and Developer Mode is on, then from the repo folder:
+
+```bash
+npm start
+```
+
+This builds the extension and loads it into Live. You'll see the Composition Aide commands appear in Live's context menus.
+
+> **Stuck?** The most common issues: (1) wrong `EXTENSION_HOST_PATH` — double-check the path exists and you saved `.env` not `.env.example`; (2) Developer Mode is off — check Settings → Extensions; (3) Node.js version too old — `node --version` should be ≥ 24.14.1.
+
+> **FYI:** While the extension is running, you can open `src/theory-machine.html` directly in your browser. It connects to the local theory engine automatically and works as a full standalone web app — nice to have open on a second screen while you work in Live.
+
+### Scripts
+
+| Script | What it does |
+|---|---|
+| `npm run build` | Type-check + bundle → `dist/extension.js` (dev: sourcemaps, unminified) |
+| `npm start` | Build + launch in Live's Extension Host |
+| `npm run package` | Production build + create the distributable `.ablx` (includes the `engine/` Python files) |
+
+`npm run package` writes `Composition-Aide-<version>.ablx` to the repo root — that's the file to share. The version comes from `manifest.json`.
+
+### Environment overrides
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `COMPOSITION_AIDE_PATH` | `engine/` (bundled) | Point the extension at a different Python engine directory during development |
+| `PYTHON_CMD` | `python3` (Mac/Linux), `python` (Windows) | Use a specific Python interpreter or full path |
+
+---
+
 ## The Python Engine
 
-The `engine/` directory contains the full theory engine — pure Python stdlib, no pip dependencies. It runs as a persistent subprocess alongside Live and handles all music theory computations over a newline-delimited JSON-RPC protocol.
+The `engine/` directory contains the full theory engine — pure Python stdlib, no pip dependencies. It is bundled into the `.ablx`, runs as a persistent subprocess alongside Live, and handles all music theory computations over a newline-delimited JSON-RPC protocol on stdin/stdout.
 
 **Files:**
 

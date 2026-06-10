@@ -28,6 +28,9 @@ export class ChordgenEngine {
     const proc = spawn(this.pythonCmd, ["-u", "-m", "chordgen.server"], {
       cwd: this.cwd,
       stdio: ["pipe", "pipe", "pipe"],
+      // The bundled engine dir may not be writable under the extension
+      // sandbox, so keep Python from writing __pycache__ there
+      env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" },
     });
 
     proc.stdout!.on("data", (chunk: Buffer) => {

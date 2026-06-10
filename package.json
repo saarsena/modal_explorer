@@ -3,7 +3,8 @@
   "main": "dist/extension.js",
   "scripts": {
     "build": "tsc --noEmit && tsx build.ts",
-    "start": "tsx build.ts && extensions-cli run"
+    "start": "tsx build.ts && extensions-cli run",
+    "package": "tsc --noEmit && tsx build.ts --production && extensions-cli package -i engine"
   },
   "dependencies": {
     "@ableton-extensions/sdk": "file:../../ableton-extensions-sdk-1.0.0-beta.0.tgz"
