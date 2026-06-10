@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+  const isWebKit = window.webkit?.messageHandlers?.live;
+  const isWebView2 = window.chrome?.webview;
+  function closeWithResult(result) {
+    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
+    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
+    else if (isWebView2) window.chrome.webview.postMessage(msg);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeWithResult(null);
+    if (e.key === 'Enter') submit();
+  });
+  function submit() {
+    closeWithResult({
+      action: "bass",
+      pattern: document.getElementById("pattern").value,
+      octave:  parseInt(document.getElementById("octave").value, 10),
+    });
+  }
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 14px;
+    padding: 16px;
+  }
+  h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+  .row { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 260px; }
+  .row label { width: 64px; color: #999; }
+  select {
+    flex: 1;
+    background: #2a2a2a;
+    color: #d4d4d4;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font: inherit;
+  }
+  .hint { font-size: 11px; color: #777; max-width: 260px; text-align: center; }
+  .actions { display: flex; gap: 8px; margin-top: 4px; }
+  button.primary {
+    padding: 6px 22px;
+    background: #0e639c;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button.primary:hover { background: #1177bb; }
+  button.cancel {
+    padding: 6px 16px;
+    background: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #ccc;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.cancel:hover { background: #4a4a4a; }
+</style>
+</head>
+<body>
+<h2>Generate Bass Line</h2>
+<div class="row">
+  <label for="pattern">Pattern</label>
+  <select id="pattern">
+    <option value="roots">Roots (held)</option>
+    <option value="root_fifth">Root – Fifth</option>
+    <option value="pump_8ths">Pumping 8ths</option>
+    <option value="root_octave_8ths">Octave 8ths</option>
+    <option value="walking">Walking</option>
+    <option value="tresillo">Tresillo (3-3-2)</option>
+    <option value="offbeats">Offbeat Skank</option>
+  </select>
+</div>
+<div class="row">
+  <label for="octave">Register</label>
+  <select id="octave">
+    <option value="1">Low</option>
+    <option value="2" selected>Standard</option>
+    <option value="3">High</option>
+  </select>
+</div>
+<div class="hint">Follows the chords in this clip. The bass clip is written to the first empty MIDI slot.</div>
+<div class="actions">
+  <button class="cancel" onclick="closeWithResult(null)">Cancel</button>
+  <button class="primary" onclick="submit()">Generate</button>
+</div>
+</body>
+</html>

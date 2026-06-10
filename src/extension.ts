@@ -21,6 +21,7 @@ import transposeHtml from "./transpose.html";
 import compatibleHtml from "./compatible.html";
 import transposesessionHtml from "./transposesession.html";
 import theoryMachineHtml from "./theory-machine.html";
+import bassHtml from "./bass.html";
 
 // ── Wire-format types ────────────────────────────────────────────────────────
 
@@ -109,6 +110,8 @@ interface SessionMapData {
 type KeyInfo = { root: number; scale: string; label: string };
 
 type TransposeModalResult = { action: "transpose"; semitones: number };
+
+type BassModalResult = { action: "bass"; pattern: string; octave: number };
 
 type SessionTransposeResult = { action: "transpose"; semitones: number; recolor: boolean };
 
@@ -506,6 +509,124 @@ function buildRhythmNotes(
         velocity,
       }));
     });
+  });
+}
+
+// ── Bass line patterns ───────────────────────────────────────────────────────
+// A bass line follows recognized chords, one figure per chord span. Spans vary
+// with the source clip, so step-based patterns (8ths, walking quarters) use
+// absolute note values across the span, while figure-based patterns (tresillo,
+// offbeats) scale a 4-beat shape to fit — same approach as RHYTHM_PATTERNS.
+
+interface BassChordSpan {
+  start: number;        // beat within the clip
+  span: number;         // beats until the next chord (or clip end)
+  rootPc: number;       // pitch class of the recognized root
+  thirdIv: number;      // semitones root→third
+  fifthIv: number;      // semitones root→fifth
+  nextRootPc: number | null;
+}
+
+function bassSpansFromChordEntries(
+  entries: Array<{ beat: number; root: number; pitchClasses: number[] }>,
+  clipBeats: number,
+): BassChordSpan[] {
+  return entries.map((e, i) => {
+    const next = entries[i + 1];
+    const end = next ? next.beat : Math.max(clipBeats, e.beat + 1);
+    // pitch_classes come back ordered root, third, fifth, …
+    const pcs = e.pitchClasses;
+    const iv = (idx: number, fallback: number) => {
+      const pc = pcs[idx];
+      return pc === undefined ? fallback : (pc - e.root + 12) % 12 || fallback;
+    };
+    return {
+      start: e.beat,
+      span: Math.max(0.5, end - e.beat),
+      rootPc: e.root,
+      thirdIv: iv(1, 4),
+      fifthIv: iv(2, 7),
+      nextRootPc: next ? next.root : null,
+    };
+  });
+}
+
+function buildBassNotes(
+  spans: BassChordSpan[],
+  pattern: string,
+  octave: number,
+): NoteDescription[] {
+  const anchor = 12 * (octave + 1); // engine convention: octave 2 → MIDI 36
+  const clampPitch = (p: number) => Math.max(20, Math.min(64, p));
+  const note = (
+    start: number, dur: number, pitch: number, vMult: number,
+  ): NoteDescription => ({
+    pitch: clampPitch(pitch),
+    startTime: start,
+    duration: dur,
+    velocity: Math.max(1, Math.min(127, Math.round(BASE_VELOCITY * vMult))),
+  });
+
+  return spans.flatMap(c => {
+    const root = anchor + c.rootPc;
+    const third = root + c.thirdIv;
+    const fifth = root + c.fifthIv;
+    const out: NoteDescription[] = [];
+
+    switch (pattern) {
+      case "root_fifth": {
+        if (c.span < 2) { out.push(note(c.start, c.span * 0.95, root, 1.0)); break; }
+        const half = c.span / 2;
+        out.push(note(c.start, half * 0.95, root, 1.0));
+        out.push(note(c.start + half, half * 0.95, fifth, 0.85));
+        break;
+      }
+      case "pump_8ths":
+      case "root_octave_8ths": {
+        const steps = Math.max(1, Math.round(c.span / 0.5));
+        const step = c.span / steps;
+        for (let s = 0; s < steps; s++) {
+          const pitch = pattern === "root_octave_8ths" && s % 2 === 1 ? root + 12 : root;
+          out.push(note(c.start + s * step, step * 0.9, pitch, s % 2 === 0 ? 1.0 : 0.8));
+        }
+        break;
+      }
+      case "walking": {
+        const steps = Math.max(1, Math.round(c.span));
+        const step = c.span / steps;
+        // Cycle chord tones, then approach the next root chromatically from
+        // whichever side is closer to our fifth (classic walk-up/walk-down)
+        const cycle = [root, third, fifth, third];
+        for (let s = 0; s < steps; s++) {
+          let pitch = cycle[s % cycle.length] ?? root;
+          if (s === steps - 1 && steps > 1 && c.nextRootPc !== null) {
+            const target = anchor + c.nextRootPc;
+            pitch = Math.abs(target - 1 - fifth) <= Math.abs(target + 1 - fifth)
+              ? target - 1
+              : target + 1;
+          }
+          out.push(note(c.start + s * step, step * 0.9, pitch, s === 0 ? 1.0 : 0.88));
+        }
+        break;
+      }
+      case "tresillo": {
+        const sc = c.span / 4;
+        out.push(note(c.start + 0 * sc, 1.4 * sc, root, 1.0));
+        out.push(note(c.start + 1.5 * sc, 1.4 * sc, root, 0.85));
+        out.push(note(c.start + 3 * sc, 0.9 * sc, fifth, 0.95));
+        break;
+      }
+      case "offbeats": {
+        const sc = c.span / 4;
+        for (const t of [0.5, 1.5, 2.5, 3.5]) {
+          out.push(note(c.start + t * sc, 0.35 * sc, root, 0.95));
+        }
+        break;
+      }
+      default: // "roots"
+        out.push(note(c.start, c.span * 0.95, root, 1.0));
+    }
+    return out;
   });
 }
 
@@ -1778,6 +1899,96 @@ export function activate(activation: ActivationContext) {
   );
 
   context.ui.registerContextMenuAction("Scene", "Transpose Session…", "aide.transposeSession");
+
+  // ── Generate Bass Line ───────────────────────────────────────────────────
+
+  context.commands.registerCommand("aide.bassLine", (arg: unknown) =>
+    void (async (handle: Handle) => {
+      const clip = context.getObjectFromHandle(handle, MidiClip);
+      const notes = clip.notes;
+
+      if (notes.length === 0) {
+        console.log("[composition-aide] Clip has no notes.");
+        return;
+      }
+
+      // Recognize the clip's chords, same pipeline as Analyze Harmony
+      const groups = groupNotesByChord(notes);
+      const recognizeResults = await Promise.all(
+        [...groups.entries()].map(([beatKey, pitches]) =>
+          engine
+            .send<RecognizeResult>("recognize_chord", { notes: pitches })
+            .then(result => ({ beatKey, result })),
+        ),
+      );
+
+      const chordEntries = recognizeResults
+        .sort((a, b) => a.beatKey - b.beatKey)
+        .flatMap(({ beatKey, result }) => {
+          const best = result.matches[0];
+          if (!best || best.score < 0.5) return [];
+          return [{
+            beat: beatKey / 1000,
+            name: best.chord.name,
+            root: best.chord.root,
+            pitchClasses: best.chord.pitch_classes,
+          }];
+        })
+        .filter((entry, i, arr) => i === 0 || entry.name !== arr[i - 1]?.name);
+
+      if (chordEntries.length === 0) {
+        console.log("[composition-aide] Could not identify any chords in this clip.");
+        return;
+      }
+
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(bassHtml)}`,
+        340, 300,
+      );
+
+      let params: BassModalResult | null;
+      try { params = JSON.parse(rawResult) as BassModalResult | null; }
+      catch { return; }
+      if (!params || params.action !== "bass") return;
+
+      const clipBeats = clip.looping
+        ? (clip.loopEnd - clip.loopStart)
+        : clip.duration;
+      const lastBeat = chordEntries[chordEntries.length - 1]?.beat ?? 0;
+      const totalBeats = clipBeats > lastBeat ? clipBeats : lastBeat + 4;
+
+      const spans = bassSpansFromChordEntries(chordEntries, totalBeats);
+      const bassNotes = buildBassNotes(spans, params.pattern, params.octave);
+
+      // Write to the first empty slot in any MIDI track (same convention as
+      // Find Compatible Clips)
+      const song = context.application.song;
+      let emptySlot: ClipSlot<"1.0.0"> | null = null;
+      if (song) {
+        outer: for (const track of song.tracks) {
+          if (!(track instanceof MidiTrack)) continue;
+          for (const slot of track.clipSlots) {
+            if (slot.clip === null) { emptySlot = slot; break outer; }
+          }
+        }
+      }
+      if (!emptySlot) {
+        console.log("[composition-aide] No empty MIDI slot found — add an empty slot to a MIDI track.");
+        return;
+      }
+
+      const newClip = await emptySlot.createMidiClip(totalBeats);
+      newClip.notes = bassNotes;
+      newClip.name = `Bass (${params.pattern.replace(/_/g, " ")}) — ${clip.name || chordEntries.map(e => e.name).join(" – ")}`;
+
+      console.log(
+        `[composition-aide] Bass line: ${chordEntries.map(e => e.name).join(" – ")} ` +
+        `(${params.pattern}, octave ${params.octave}, ${bassNotes.length} notes)`,
+      );
+    })(arg as Handle).catch(e => console.error(e)),
+  );
+
+  context.ui.registerContextMenuAction("MidiClip", "Generate Bass Line…", "aide.bassLine");
 
   // ── Theory Machine ───────────────────────────────────────────────────────
 
