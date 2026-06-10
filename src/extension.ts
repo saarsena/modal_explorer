@@ -74,6 +74,7 @@ interface DialogResult {
   voicing: string;
   sevenths: boolean;
   snapToScale?: boolean;
+  customProgression?: string;
 }
 
 type AnalyzeModalResult =
@@ -363,6 +364,62 @@ function compatibilityLabel(
   return null;
 }
 
+// Tokens whose head is an (optionally flat/sharp-prefixed) i/v numeral are
+// Roman; anything else (A–G roots like "Bb", "Dm7") is an absolute chord name.
+const ROMAN_TOKEN_RE = /^[b#♭♯]?[ivIV]/;
+
+async function parseProgressionToken(
+  eng: ChordgenEngine,
+  token: string,
+  key: number,
+  scale: string,
+): Promise<ChordJson> {
+  const asRoman = async () =>
+    (await eng.send<{ chord: ChordJson }>("parse_roman", { roman: token, key, scale })).chord;
+  const asName = async () =>
+    (await eng.send<{ chord: ChordJson }>("parse_chord", { name: token })).chord;
+
+  const [first, second] = ROMAN_TOKEN_RE.test(token)
+    ? [asRoman, asName]
+    : [asName, asRoman];
+  try {
+    return await first();
+  } catch {
+    try {
+      return await second();
+    } catch {
+      throw new Error(`Couldn't parse "${token}" as a Roman numeral or chord name`);
+    }
+  }
+}
+
+/** Chords for the generate dialogs: the typed custom progression if present,
+ *  otherwise the selected template. */
+async function resolveDialogChords(
+  eng: ChordgenEngine,
+  params: DialogResult,
+): Promise<ChordJson[]> {
+  const text = params.customProgression?.trim();
+  if (!text) {
+    const { chords } = await eng.send<{ chords: ChordJson[] }>("progression", {
+      key: params.key,
+      scale: params.scale,
+      template: params.template,
+      sevenths: params.sevenths,
+    });
+    return chords;
+  }
+  const tokens = text.split(/[\s,|]+/).filter(Boolean);
+  return Promise.all(
+    tokens.map(tok => parseProgressionToken(eng, tok, params.key, params.scale)),
+  );
+}
+
+/** Label for generated clip names: the typed progression or the template. */
+function progressionLabel(params: DialogResult): string {
+  return params.customProgression?.trim() || params.template;
+}
+
 // ── Extension entry ──────────────────────────────────────────────────────────
 
 export function activate(activation: ActivationContext) {
@@ -393,7 +450,7 @@ export function activate(activation: ActivationContext) {
 
       const rawResult = await context.ui.showModalDialog(
         `data:text/html,${encodeURIComponent(interfaceHtml)}`,
-        380, 322,
+        380, 392,
       );
 
       let params: DialogResult | null;
@@ -404,12 +461,7 @@ export function activate(activation: ActivationContext) {
       const selectionBeats =
         selection.time_selection_end - selection.time_selection_start;
 
-      const { chords } = await engine.send<{ chords: ChordJson[] }>("progression", {
-        key: params.key,
-        scale: params.scale,
-        template: params.template,
-        sevenths: params.sevenths,
-      });
+      const chords = await resolveDialogChords(engine, params);
 
       const { voicings } = await engine.send<{ voicings: number[][] }>("voice_progression", {
         chords,
@@ -419,7 +471,7 @@ export function activate(activation: ActivationContext) {
 
       const beatsPerChord = selectionBeats / chords.length;
       const clipName =
-        `${params.template} — ${params.keyName} ${params.scale.replace(/_/g, " ")}`;
+        `${progressionLabel(params)} — ${params.keyName} ${params.scale.replace(/_/g, " ")}`;
 
       let notes: NoteDescription[] = voicings.flatMap((noteNums, i) =>
         noteNums.map(pitch => ({
@@ -955,7 +1007,7 @@ export function activate(activation: ActivationContext) {
 
       const rawResult = await context.ui.showModalDialog(
         `data:text/html,${encodeURIComponent(interfaceHtml)}`,
-        380, 322,
+        380, 392,
       );
 
       let params: DialogResult | null;
@@ -963,12 +1015,7 @@ export function activate(activation: ActivationContext) {
       catch { return; }
       if (!params) return;
 
-      const { chords } = await engine.send<{ chords: ChordJson[] }>("progression", {
-        key: params.key,
-        scale: params.scale,
-        template: params.template,
-        sevenths: params.sevenths,
-      });
+      const chords = await resolveDialogChords(engine, params);
 
       const { voicings } = await engine.send<{ voicings: number[][] }>("voice_progression", {
         chords,
@@ -993,7 +1040,7 @@ export function activate(activation: ActivationContext) {
       }
 
       clip.notes = notes;
-      clip.name = `${params.template} — ${params.keyName} ${params.scale.replace(/_/g, " ")}`;
+      clip.name = `${progressionLabel(params)} — ${params.keyName} ${params.scale.replace(/_/g, " ")}`;
 
       console.log(
         `[composition-aide] Generated "${clip.name}": ` +

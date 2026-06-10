@@ -19,14 +19,80 @@
     function generate() {
       const keyIdx = Number(document.getElementById('key').value);
       closeWithResult({
-        key:         keyIdx,
-        keyName:     KEY_NAMES[keyIdx],
-        scale:       document.getElementById('scale').value,
-        template:    document.getElementById('template').value,
-        voicing:     document.getElementById('voicing').value,
-        sevenths:    document.getElementById('sevenths').checked,
-        snapToScale: document.getElementById('snapToScale').checked,
+        key:               keyIdx,
+        keyName:           KEY_NAMES[keyIdx],
+        scale:             document.getElementById('scale').value,
+        template:          document.getElementById('template').value,
+        voicing:           document.getElementById('voicing').value,
+        sevenths:          document.getElementById('sevenths').checked,
+        snapToScale:       document.getElementById('snapToScale').checked,
+        customProgression: document.getElementById('custom').value.trim(),
       });
+    }
+
+    // ── Live preview of the custom progression ──────────────────────────────
+    // Validates against the engine's HTTP endpoint (same process the
+    // extension talks to over stdio). Preview is best-effort UX sugar: the
+    // extension re-parses authoritatively on submit, so if the HTTP port is
+    // unavailable we just show nothing.
+
+    const ENGINE = 'http://127.0.0.1:7842';
+    const ROMAN_RE = /^[b#♭♯]?[ivIV]/;
+    let previewTimer = null;
+    let previewSeq = 0;
+
+    async function engineOp(op, params) {
+      const r = await fetch(ENGINE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ op, ...params }),
+      });
+      const data = await r.json();
+      if (data.error) throw new Error(data.error);
+      return data.result;
+    }
+
+    async function parseToken(tok, key, scale) {
+      const asRoman = () => engineOp('parse_roman', { roman: tok, key, scale });
+      const asName  = () => engineOp('parse_chord', { name: tok });
+      const [first, second] = ROMAN_RE.test(tok) ? [asRoman, asName] : [asName, asRoman];
+      try { return (await first()).chord.name; }
+      catch { return (await second()).chord.name; }
+    }
+
+    async function updatePreview() {
+      const text = document.getElementById('custom').value.trim();
+      const preview = document.getElementById('preview');
+      document.getElementById('template').disabled = !!text;
+
+      if (!text) { preview.innerHTML = ''; return; }
+
+      const key = Number(document.getElementById('key').value);
+      const scale = document.getElementById('scale').value;
+      const tokens = text.split(/[\s,|]+/).filter(Boolean);
+      const seq = ++previewSeq;
+
+      let chips;
+      try {
+        chips = await Promise.all(tokens.map(async tok => {
+          try { return { ok: true, label: await parseToken(tok, key, scale) }; }
+          catch { return { ok: false, label: tok }; }
+        }));
+      } catch { return; } // engine HTTP unreachable — skip preview entirely
+
+      if (seq !== previewSeq) return; // a newer keystroke superseded this run
+      preview.innerHTML = '';
+      for (const c of chips) {
+        const el = document.createElement('span');
+        el.className = 'chip' + (c.ok ? '' : ' bad');
+        el.textContent = c.ok ? c.label : c.label + ' ?';
+        preview.appendChild(el);
+      }
+    }
+
+    function schedulePreview() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(updatePreview, 200);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -34,6 +100,9 @@
         if (e.key === 'Enter') generate();
         if (e.key === 'Escape') closeWithResult(null);
       });
+      document.getElementById('custom').addEventListener('input', schedulePreview);
+      document.getElementById('key').addEventListener('change', schedulePreview);
+      document.getElementById('scale').addEventListener('change', schedulePreview);
     });
   </script>
   <style>
@@ -103,6 +172,39 @@
       outline-offset: 0;
     }
     select:focus { outline: 2px solid var(--c-text-dim); }
+    select:disabled { opacity: 0.4; cursor: default; }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--c-input-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 0.4em;
+      outline-offset: 0;
+    }
+    input[type="text"]:focus { outline: 2px solid var(--c-text-dim); }
+    input[type="text"]::placeholder { color: var(--c-text-dim); }
+
+    .preview {
+      grid-column: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3em;
+      min-height: 1.4em;
+      align-items: center;
+    }
+    .chip {
+      background: var(--c-control-bg);
+      border: 1px solid var(--c-border);
+      border-radius: 0.8em;
+      padding: 0.1em 0.6em;
+      line-height: 1.3;
+    }
+    .chip.bad {
+      color: hsl(0, 65%, 62%);
+      border-color: hsl(0, 65%, 35%);
+    }
 
     .checkbox-row {
       display: flex;
@@ -200,6 +302,12 @@
       <option value="Pachelbel">Pachelbel Canon</option>
       <option value="Circle of fifths">Circle of Fifths</option>
     </select>
+
+    <span class="label">Custom</span>
+    <input type="text" id="custom" spellcheck="false" autocomplete="off"
+           placeholder="ii7 V7 Imaj7 · bVII · V7/ii · Dm7 G7" />
+
+    <div class="preview" id="preview"></div>
 
     <span class="label">Voicing</span>
     <select id="voicing">

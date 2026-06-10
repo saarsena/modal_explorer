@@ -28,9 +28,11 @@ export class ChordgenEngine {
     const proc = spawn(this.pythonCmd, ["-u", "-m", "chordgen.server"], {
       cwd: this.cwd,
       stdio: ["pipe", "pipe", "pipe"],
-      // The bundled engine dir may not be writable under the extension
-      // sandbox, so keep Python from writing __pycache__ there
-      env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" },
+      // PYTHONDONTWRITEBYTECODE: the bundled engine dir may not be writable
+      // under the extension sandbox, so keep Python from writing __pycache__.
+      // PYTHONUTF8: we write UTF-8 to stdin but Python defaults stdio to
+      // cp1252 on Windows, which garbles non-ASCII input like "iiø7" or "♭".
+      env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1", PYTHONUTF8: "1" },
     });
 
     proc.stdout!.on("data", (chunk: Buffer) => {

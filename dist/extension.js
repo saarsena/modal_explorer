@@ -1,6 +1,1008 @@
-"use strict";var Re=Object.create;var X=Object.defineProperty;var Pe=Object.getOwnPropertyDescriptor;var je=Object.getOwnPropertyNames;var $e=Object.getPrototypeOf,Oe=Object.prototype.hasOwnProperty;var Be=(e,t)=>{for(var a in t)X(e,a,{get:t[a],enumerable:!0})},de=(e,t,a,c)=>{if(t&&typeof t=="object"||typeof t=="function")for(let r of je(t))!Oe.call(e,r)&&r!==a&&X(e,r,{get:()=>t[r],enumerable:!(c=Pe(t,r))||c.enumerable});return e};var Le=(e,t,a)=>(a=e!=null?Re($e(e)):{},de(t||!e||!e.__esModule?X(a,"default",{value:e,enumerable:!0}):a,e)),ze=e=>de(X({},"__esModule",{value:!0}),e);var xt={};Be(xt,{activate:()=>vt});module.exports=ze(xt);var j=class pe{constructor(t,a,c){this.handle=t,this.dataModel=a,this.objectRegistry=c}get parent(){let t=this.dataModel.getObjectCanonicalParent(this.handle);return t?this.objectRegistry.getObjectFromHandle(t,pe):null}},z=(e,t,...a)=>new Promise((c,r)=>{e.withinTransaction(()=>t(...a,c,r))}),R=(e,t,a,c,...r)=>new Promise((m,s)=>{e.withinTransaction(()=>c(...r,l=>m(t.getObjectFromHandle(l,a)),s))}),F=class extends j{static className="Clip";get name(){return this.dataModel.clipGetName(this.handle)}set name(e){this.dataModel.withinTransaction(()=>{this.dataModel.clipSetName(this.handle,e)})}get startTime(){return this.dataModel.clipGetStartTime(this.handle)}get endTime(){return this.dataModel.clipGetEndTime(this.handle)}get duration(){return this.dataModel.clipGetEndTime(this.handle)-this.dataModel.clipGetStartTime(this.handle)}get startMarker(){return this.dataModel.clipGetStartMarker(this.handle)}get endMarker(){return this.dataModel.clipGetEndMarker(this.handle)}get looping(){return this.dataModel.clipGetLooping(this.handle)}set looping(e){this.dataModel.withinTransaction(()=>{this.dataModel.clipSetLooping(this.handle,e)})}get loopStart(){return this.dataModel.clipGetLoopStart(this.handle)}get loopEnd(){return this.dataModel.clipGetLoopEnd(this.handle)}get color(){return this.dataModel.clipGetColor(this.handle)}set color(e){this.dataModel.withinTransaction(()=>{this.dataModel.clipSetColor(this.handle,e)})}get muted(){return this.dataModel.clipGetMuted(this.handle)}set muted(e){this.dataModel.withinTransaction(()=>{this.dataModel.clipSetMuted(this.handle,e)})}},ee=class extends F{static className="AudioClip";get filePath(){return this.dataModel.audioclipGetFilePath(this.handle)}get warping(){return this.dataModel.audioclipGetWarping(this.handle)}set warping(e){this.dataModel.withinTransaction(()=>{this.dataModel.audioclipSetWarping(this.handle,e)})}get warpMode(){return this.dataModel.audioclipGetWarpMode(this.handle)}set warpMode(e){this.dataModel.withinTransaction(()=>{this.dataModel.audioclipSetWarpMode(this.handle,e)})}get warpMarkers(){return this.dataModel.audioclipGetWarpMarkers(this.handle)}},D=class extends F{static className="MidiClip";get notes(){return this.dataModel.midiclipGetNotes(this.handle)}set notes(e){this.dataModel.withinTransaction(()=>{this.dataModel.midiclipSetNotes(this.handle,e)})}},q=class extends j{static className="ClipSlot";get clip(){let e=this.dataModel.clipslotGetClip(this.handle);return e?this.objectRegistry.getObjectFromHandle(e,F):null}deleteClip(){return z(this.dataModel,this.dataModel.clipslotDeleteClip,this.handle)}createMidiClip(e){return R(this.dataModel,this.objectRegistry,D,this.dataModel.clipslotCreateMidiClip,this.handle,e)}createAudioClip(e){return R(this.dataModel,this.objectRegistry,ee,this.dataModel.clipslotCreateAudioClip,this.handle,{filePath:e.filePath,isWarped:e.isWarped,loopSettings:e.loopSettings})}},H=class extends j{static className="DeviceParameter";get name(){return this.dataModel.deviceParameterGetName(this.handle)}get min(){return this.dataModel.deviceParameterGetInternalMin(this.handle)}get max(){return this.dataModel.deviceParameterGetInternalMax(this.handle)}get isQuantized(){return this.dataModel.deviceParameterGetIsQuantized(this.handle)}get defaultValue(){return this.dataModel.deviceParameterGetDefaultValue(this.handle)}get valueItems(){return this.dataModel.deviceParameterGetValueItems(this.handle)}getValue(){return new Promise(e=>{this.dataModel.deviceParameterGetInternalValue(this.handle,e)})}setValue(e){return new Promise((t,a)=>{this.dataModel.withinTransaction(()=>{this.dataModel.deviceParameterSetInternalValue(this.handle,e,t,c=>a(new Error(c)))})})}},L=class extends j{static className="Device";get name(){return this.dataModel.deviceGetName(this.handle)}get parameters(){return this.dataModel.deviceGetParameters(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,H))}},se=class extends j{static className="TakeLane";get clips(){return this.dataModel.takelaneGetClips(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,F))}get name(){return this.dataModel.takelaneGetName(this.handle)}set name(e){this.dataModel.withinTransaction(()=>{this.dataModel.takelaneSetName(this.handle,e)})}createMidiClip(e,t){return R(this.dataModel,this.objectRegistry,D,this.dataModel.takelaneCreateMidiClip,this.handle,e,t)}createAudioClip(e){return R(this.dataModel,this.objectRegistry,ee,this.dataModel.takelaneCreateAudioClip,this.handle,{duration:e.duration,filePath:e.filePath,isWarped:e.isWarped,loopSettings:e.loopSettings,startTime:e.startTime})}},he=class extends j{static className="MixerDevice";get volume(){return this.objectRegistry.getObjectFromHandle(this.dataModel.mixerdeviceGetVolume(this.handle),H)}get panning(){return this.objectRegistry.getObjectFromHandle(this.dataModel.mixerdeviceGetPanning(this.handle),H)}get sends(){return this.dataModel.mixerdeviceGetSends(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,H))}},V=class ue extends j{static className="Track";get name(){return this.dataModel.trackGetName(this.handle)}set name(t){this.dataModel.withinTransaction(()=>{this.dataModel.trackSetName(this.handle,t)})}get mute(){return this.dataModel.trackGetMute(this.handle)}set mute(t){this.dataModel.withinTransaction(()=>{this.dataModel.trackSetMute(this.handle,t)})}get solo(){return this.dataModel.trackGetSolo(this.handle)}set solo(t){this.dataModel.withinTransaction(()=>{this.dataModel.trackSetSolo(this.handle,t)})}get mutedViaSolo(){return this.dataModel.trackGetMutedViaSolo(this.handle)}get arm(){return this.dataModel.trackGetArm(this.handle)}set arm(t){this.dataModel.withinTransaction(()=>{this.dataModel.trackSetArm(this.handle,t)})}get clipSlots(){return this.dataModel.trackGetClipSlots(this.handle).map(t=>this.objectRegistry.getObjectFromHandle(t,q))}get takeLanes(){return this.dataModel.trackGetTakeLanes(this.handle).map(t=>this.objectRegistry.getObjectFromHandle(t,se))}get arrangementClips(){return this.dataModel.trackGetArrangementClips(this.handle).map(t=>this.objectRegistry.getObjectFromHandle(t,F))}get groupTrack(){let t=this.dataModel.trackGetGroupTrack(this.handle);return t?this.objectRegistry.getObjectFromHandle(t,ue):null}get devices(){return this.dataModel.trackGetDevices(this.handle).map(t=>this.objectRegistry.getObjectFromHandle(t,L))}get mixer(){return this.objectRegistry.getObjectFromHandle(this.dataModel.trackGetMixerDevice(this.handle),he)}createTakeLane(){return R(this.dataModel,this.objectRegistry,se,this.dataModel.trackCreateTakeLane,this.handle)}insertDevice(t,a){return R(this.dataModel,this.objectRegistry,L,this.dataModel.trackInsertDevice,this.handle,t,BigInt(a))}deleteDevice(t){return z(this.dataModel,this.dataModel.trackDeleteDevice,this.handle,t.handle)}duplicateDevice(t){return R(this.dataModel,this.objectRegistry,L,this.dataModel.trackDuplicateDevice,this.handle,t.handle)}deleteClip(t){return z(this.dataModel,this.dataModel.trackDeleteClip,this.handle,t.handle)}clearClipsInRange(t,a){return z(this.dataModel,this.dataModel.trackClearClipsInRange,this.handle,t,a)}},ge=class extends V{static className="AudioTrack";createAudioClip(e){return R(this.dataModel,this.objectRegistry,ee,this.dataModel.trackCreateAudioClip,this.handle,{duration:e.duration,filePath:e.filePath,isWarped:e.isWarped,loopSettings:e.loopSettings,startTime:e.startTime})}},ie=class extends j{static className="CuePoint";get time(){return this.dataModel.cuePointGetTime(this.handle)}get name(){return this.dataModel.cuePointGetName(this.handle)}set name(e){this.dataModel.withinTransaction(()=>{this.dataModel.cuePointSetName(this.handle,e)})}},K=class extends V{static className="MidiTrack";createMidiClip(e,t){return R(this.dataModel,this.objectRegistry,D,this.dataModel.trackCreateMidiClip,this.handle,e,t)}},Z=class extends j{static className="Scene";get name(){return this.dataModel.sceneGetName(this.handle)}set name(e){this.dataModel.withinTransaction(()=>{this.dataModel.sceneSetName(this.handle,e)})}get tempo(){return this.dataModel.sceneGetTempo(this.handle)}get signatureNumerator(){return this.dataModel.sceneGetSignatureNumerator(this.handle)}get signatureDenominator(){return this.dataModel.sceneGetSignatureDenominator(this.handle)}},be=class extends j{static className="Song";get tracks(){return this.dataModel.songGetTracks(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,V))}get returnTracks(){return this.dataModel.songGetReturnTracks(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,V))}get mainTrack(){return this.objectRegistry.getObjectFromHandle(this.dataModel.songGetMainTrack(this.handle),V)}get scenes(){return this.dataModel.songGetScenes(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,Z))}get cuePoints(){return this.dataModel.songGetCuePoints(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,ie))}get tempo(){return this.dataModel.songGetTempo(this.handle)}set tempo(e){this.dataModel.withinTransaction(()=>{this.dataModel.songSetTempo(this.handle,e)})}get gridQuantization(){return this.dataModel.songGetGridQuantization(this.handle)}get gridIsTriplet(){return this.dataModel.songGetGridIsTriplet(this.handle)}get rootNote(){return Number(this.dataModel.songGetRootNote(this.handle))}get scaleName(){return this.dataModel.songGetScaleName(this.handle)}get scaleMode(){return this.dataModel.songGetScaleMode(this.handle)}get scaleIntervals(){return this.dataModel.songGetScaleIntervals(this.handle).map(Number)}createAudioTrack(){return R(this.dataModel,this.objectRegistry,ge,this.dataModel.songCreateAudioTrack,this.handle)}createMidiTrack(){return R(this.dataModel,this.objectRegistry,K,this.dataModel.songCreateMidiTrack,this.handle)}createScene(e){return R(this.dataModel,this.objectRegistry,Z,this.dataModel.songCreateScene,this.handle,BigInt(e))}deleteTrack(e){return z(this.dataModel,this.dataModel.songDeleteTrack,this.handle,e.handle)}deleteScene(e){return z(this.dataModel,this.dataModel.songDeleteScene,this.handle,e.handle)}duplicateTrack(e){return R(this.dataModel,this.objectRegistry,V,this.dataModel.songDuplicateTrack,this.handle,e.handle)}duplicateScene(e){return R(this.dataModel,this.objectRegistry,Z,this.dataModel.songDuplicateScene,this.handle,e.handle)}createCuePoint(e){return R(this.dataModel,this.objectRegistry,ie,this.dataModel.songCreateCuePoint,this.handle,e)}deleteCuePoint(e){return z(this.dataModel,this.dataModel.songDeleteCuePoint,this.handle,e.handle)}},fe=class extends j{static className="Application";get song(){return this.objectRegistry.getObjectFromHandle(this.dataModel.rootGetSong(this.handle),be)}},He=class{module;constructor(e){this.module=e}registerCommand(e,t){this.module.registerCommand(e,t)}executeCommand(e,...t){this.module.executeCommand(e,...t)}},ye=class extends j{static className="ChainMixerDevice";get volume(){return this.objectRegistry.getObjectFromHandle(this.dataModel.chainmixerdeviceGetVolume(this.handle),H)}get panning(){return this.objectRegistry.getObjectFromHandle(this.dataModel.chainmixerdeviceGetPanning(this.handle),H)}get sends(){return this.dataModel.chainmixerdeviceGetSends(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,H))}},Q=class extends j{static className="Chain";get devices(){return this.dataModel.chainGetDevices(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,L))}get mixer(){return this.objectRegistry.getObjectFromHandle(this.dataModel.chainGetMixerDevice(this.handle),ye)}insertDevice(e,t){return R(this.dataModel,this.objectRegistry,L,this.dataModel.chainInsertDevice,this.handle,e,BigInt(t))}deleteDevice(e){return z(this.dataModel,this.dataModel.chainDeleteDevice,this.handle,e.handle)}duplicateDevice(e){return R(this.dataModel,this.objectRegistry,L,this.dataModel.chainDuplicateDevice,this.handle,e.handle)}},ve=class extends Q{static className="DrumChain";get receivingNote(){return Number(this.dataModel.drumchainGetReceivingNote(this.handle))}set receivingNote(e){this.dataModel.withinTransaction(()=>{this.dataModel.drumchainSetReceivingNote(this.handle,BigInt(e))})}},xe=class extends L{static className="RackDevice";get chains(){return this.dataModel.rackdeviceGetChains(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,Q))}insertChain(e){return R(this.dataModel,this.objectRegistry,Q,this.dataModel.rackdeviceInsertChain,this.handle,BigInt(e))}},Ve=class extends xe{static className="DrumRackDevice";get chains(){return this.dataModel.rackdeviceGetChains(this.handle).map(e=>this.objectRegistry.getObjectFromHandle(e,ve))}},re=class extends j{static className="Sample";get filePath(){return this.dataModel.sampleGetFilePath(this.handle)}},Fe=class extends L{static className="Simpler";get sample(){let e=this.dataModel.simplerGetSample(this.handle);return e?this.objectRegistry.getObjectFromHandle(e,re):null}replaceSample(e){return R(this.dataModel,this.objectRegistry,re,this.dataModel.simplerReplaceSample,this.handle,e)}},qe=[fe,be,ge,K,V,ee,D,F,q,se,Fe,Ve,xe,L,re,ve,Q,Z,ie,H,he,ye],Ge=class{cache=new Map;dataModel;constructor(e){this.dataModel=e}getOrCreateObjectFromHandle(e){let t=this.cache.get(e.id);if(t)return t;let a=qe.find(r=>this.dataModel.getObjectIsOfClass(e,r.className));if(!a)throw new Error("Unknown object type");let c=new a(e,this.dataModel,this);return this.cache.set(e.id,c),c}getObjectFromHandle(e,t){let a=this.getOrCreateObjectFromHandle(e);if(!(a instanceof t))throw new Error("Object of incorrect type");return a}},We=class{module;constructor(e){this.module=e}get storageDirectory(){return this.module.storageDirectory}get tempDirectory(){return this.module.tempDirectory}get language(){return this.module.language}},Ke=class{module;constructor(e){this.module=e}renderPreFxAudio(e,t,a){return new Promise((c,r)=>{this.module.renderPreFxAudio(e.handle,{endTime:a,startTime:t},c,r)})}importIntoProject(e){return new Promise((t,a)=>{this.module.importIntoProject(e,t,a)})}},me=(e,t)=>typeof t=="number"?{progress:t,text:e}:{text:e},Je=class{module;constructor(e){this.module=e}registerContextMenuAction(e,t,a){return new Promise(c=>{this.module.registerContextMenuAction(e,t,a,r=>{c(()=>new Promise(m=>{r(m)}))})})}showModalDialog(e,t,a){return new Promise((c,r)=>{this.module.showModalDialog(e,t,a,c,r)})}withinProgressDialog(e,t,a){let c=new AbortController;return new Promise((r,m)=>{this.module.showProgressDialog(me(e,t.progress),({update:s,close:l})=>{let n=(v,d)=>new Promise(i=>{s(me(v,d),i)}),o=()=>new Promise(v=>{l(v)});a(n,c.signal).finally(o).then(r).catch(m)},()=>{c.abort()})})}},we=(e,t)=>{let{commands:a,dataModel:c,environment:r,resources:m,ui:s}=e.initializeExtensionHost({apiVersion:t}),l=new Ge(c);return{application:l.getObjectFromHandle(c.getRoot(),fe),commands:new He(a),environment:new We(r),getObjectFromHandle:l.getObjectFromHandle.bind(l),resources:new Ke(m),ui:new Je(s),withinTransaction:c.withinTransaction.bind(c)}};var Me=require("node:child_process"),te=class{constructor(t,a="python"){this.cwd=t;this.pythonCmd=a}cwd;pythonCmd;proc=null;buffer="";pending=new Map;nextId=1;getProcess(){if(this.proc)return this.proc;let t=(0,Me.spawn)(this.pythonCmd,["-u","-m","chordgen.server"],{cwd:this.cwd,stdio:["pipe","pipe","pipe"],env:{...process.env,PYTHONDONTWRITEBYTECODE:"1"}});return t.stdout.on("data",a=>{this.buffer+=a.toString("utf8");let c;for(;(c=this.buffer.indexOf(`
-`))!==-1;){let r=this.buffer.slice(0,c).trim();if(this.buffer=this.buffer.slice(c+1),!r)continue;let m;try{m=JSON.parse(r)}catch{continue}let s=m.id;if(s===void 0)continue;let l=this.pending.get(s);l&&(this.pending.delete(s),"error"in m?l.reject(new Error(String(m.error))):l.resolve(m.result))}}),t.stderr.on("data",a=>{console.error(`[chordgen] ${a.toString("utf8").trimEnd()}`)}),t.on("error",a=>{console.error(`[chordgen] failed to start: ${a.message}`),this.drainPending(a),this.proc=null}),t.on("exit",a=>{a!==0&&a!==null&&console.error(`[chordgen] process exited with code ${a}`),this.drainPending(new Error(`chordgen process exited (code ${a})`)),this.proc=null}),this.proc=t,t}drainPending(t){for(let[,a]of this.pending)a.reject(t);this.pending.clear()}send(t,a={}){let c=this.getProcess(),r=this.nextId++;return new Promise((m,s)=>{this.pending.set(r,{resolve:l=>m(l),reject:s}),c.stdin.write(JSON.stringify({op:t,id:r,...a})+`
-`)})}dispose(){this.proc?.kill(),this.proc=null}};var De=Le(require("node:path"),1);var le=`<!DOCTYPE html>
+"use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/extension.ts
+var extension_exports = {};
+__export(extension_exports, {
+  activate: () => activate
+});
+module.exports = __toCommonJS(extension_exports);
+
+// node_modules/@ableton-extensions/sdk/dist/index.mjs
+var DataModelObject = class DataModelObject2 {
+  /** @internal */
+  constructor(handle, dataModel, objectRegistry) {
+    this.handle = handle;
+    this.dataModel = dataModel;
+    this.objectRegistry = objectRegistry;
+  }
+  /** The canonical parent of this object in Live's object hierarchy, or `null` if it has none. */
+  get parent() {
+    const handle = this.dataModel.getObjectCanonicalParent(this.handle);
+    return handle ? this.objectRegistry.getObjectFromHandle(handle, DataModelObject2) : null;
+  }
+};
+var invokeAsync = (dataModel, fn, ...args) => new Promise((resolve, reject) => {
+  dataModel.withinTransaction(() => fn(...args, resolve, reject));
+});
+var createAsync = (dataModel, registry, type, fn, ...args) => new Promise((resolve, reject) => {
+  dataModel.withinTransaction(() => fn(...args, (handle) => resolve(registry.getObjectFromHandle(handle, type)), reject));
+});
+var Clip = class extends DataModelObject {
+  static className = "Clip";
+  get name() {
+    return this.dataModel.clipGetName(this.handle);
+  }
+  set name(name) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.clipSetName(this.handle, name);
+    });
+  }
+  get startTime() {
+    return this.dataModel.clipGetStartTime(this.handle);
+  }
+  get endTime() {
+    return this.dataModel.clipGetEndTime(this.handle);
+  }
+  get duration() {
+    return this.dataModel.clipGetEndTime(this.handle) - this.dataModel.clipGetStartTime(this.handle);
+  }
+  get startMarker() {
+    return this.dataModel.clipGetStartMarker(this.handle);
+  }
+  get endMarker() {
+    return this.dataModel.clipGetEndMarker(this.handle);
+  }
+  /**
+  * Whether the clip is looped. Enabling looping on an unwarped audio clip
+  * automatically enables warping.
+  */
+  get looping() {
+    return this.dataModel.clipGetLooping(this.handle);
+  }
+  set looping(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.clipSetLooping(this.handle, value);
+    });
+  }
+  get loopStart() {
+    return this.dataModel.clipGetLoopStart(this.handle);
+  }
+  get loopEnd() {
+    return this.dataModel.clipGetLoopEnd(this.handle);
+  }
+  get color() {
+    return this.dataModel.clipGetColor(this.handle);
+  }
+  set color(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.clipSetColor(this.handle, value);
+    });
+  }
+  get muted() {
+    return this.dataModel.clipGetMuted(this.handle);
+  }
+  set muted(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.clipSetMuted(this.handle, value);
+    });
+  }
+};
+var AudioClip = class extends Clip {
+  static className = "AudioClip";
+  get filePath() {
+    return this.dataModel.audioclipGetFilePath(this.handle);
+  }
+  get warping() {
+    return this.dataModel.audioclipGetWarping(this.handle);
+  }
+  set warping(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.audioclipSetWarping(this.handle, value);
+    });
+  }
+  get warpMode() {
+    return this.dataModel.audioclipGetWarpMode(this.handle);
+  }
+  set warpMode(warpMode) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.audioclipSetWarpMode(this.handle, warpMode);
+    });
+  }
+  get warpMarkers() {
+    return this.dataModel.audioclipGetWarpMarkers(this.handle);
+  }
+};
+var MidiClip = class extends Clip {
+  static className = "MidiClip";
+  get notes() {
+    return this.dataModel.midiclipGetNotes(this.handle);
+  }
+  set notes(notes) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.midiclipSetNotes(this.handle, notes);
+    });
+  }
+};
+var ClipSlot = class extends DataModelObject {
+  static className = "ClipSlot";
+  get clip() {
+    const handle = this.dataModel.clipslotGetClip(this.handle);
+    return handle ? this.objectRegistry.getObjectFromHandle(handle, Clip) : null;
+  }
+  /**
+  * Deletes the clip in this slot. Await the returned promise to ensure the
+  * deletion has been fully processed.
+  */
+  deleteClip() {
+    return invokeAsync(this.dataModel, this.dataModel.clipslotDeleteClip, this.handle);
+  }
+  /** @param length - Length of the clip in beats. */
+  createMidiClip(length) {
+    return createAsync(this.dataModel, this.objectRegistry, MidiClip, this.dataModel.clipslotCreateMidiClip, this.handle, length);
+  }
+  /**
+  * Creates an audio clip in this session slot.
+  *
+  * @param args.filePath - Absolute path to the audio file.
+  * @param args.isWarped - See {@link AudioTrack.createAudioClip}.
+  * @param args.loopSettings - See {@link AudioTrack.createAudioClip}.
+  */
+  createAudioClip(args) {
+    return createAsync(this.dataModel, this.objectRegistry, AudioClip, this.dataModel.clipslotCreateAudioClip, this.handle, {
+      filePath: args.filePath,
+      isWarped: args.isWarped,
+      loopSettings: args.loopSettings
+    });
+  }
+};
+var DeviceParameter = class extends DataModelObject {
+  static className = "DeviceParameter";
+  get name() {
+    return this.dataModel.deviceParameterGetName(this.handle);
+  }
+  get min() {
+    return this.dataModel.deviceParameterGetInternalMin(this.handle);
+  }
+  get max() {
+    return this.dataModel.deviceParameterGetInternalMax(this.handle);
+  }
+  get isQuantized() {
+    return this.dataModel.deviceParameterGetIsQuantized(this.handle);
+  }
+  get defaultValue() {
+    return this.dataModel.deviceParameterGetDefaultValue(this.handle);
+  }
+  get valueItems() {
+    return this.dataModel.deviceParameterGetValueItems(this.handle);
+  }
+  getValue() {
+    return new Promise((resolve) => {
+      this.dataModel.deviceParameterGetInternalValue(this.handle, resolve);
+    });
+  }
+  setValue(value) {
+    return new Promise((resolve, reject) => {
+      this.dataModel.withinTransaction(() => {
+        this.dataModel.deviceParameterSetInternalValue(this.handle, value, resolve, (error) => reject(new Error(error)));
+      });
+    });
+  }
+};
+var Device = class extends DataModelObject {
+  static className = "Device";
+  get name() {
+    return this.dataModel.deviceGetName(this.handle);
+  }
+  get parameters() {
+    return this.dataModel.deviceGetParameters(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, DeviceParameter));
+  }
+};
+var TakeLane = class extends DataModelObject {
+  static className = "TakeLane";
+  get clips() {
+    return this.dataModel.takelaneGetClips(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, Clip));
+  }
+  get name() {
+    return this.dataModel.takelaneGetName(this.handle);
+  }
+  set name(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.takelaneSetName(this.handle, value);
+    });
+  }
+  /**
+  * @param startTime - Position in the arrangement in beats.
+  * @param duration - Length of the clip in beats.
+  */
+  createMidiClip(startTime, duration) {
+    return createAsync(this.dataModel, this.objectRegistry, MidiClip, this.dataModel.takelaneCreateMidiClip, this.handle, startTime, duration);
+  }
+  /**
+  * Creates an audio clip on this take lane. See {@link AudioTrack.createAudioClip}
+  * for argument semantics.
+  */
+  createAudioClip(args) {
+    return createAsync(this.dataModel, this.objectRegistry, AudioClip, this.dataModel.takelaneCreateAudioClip, this.handle, {
+      duration: args.duration,
+      filePath: args.filePath,
+      isWarped: args.isWarped,
+      loopSettings: args.loopSettings,
+      startTime: args.startTime
+    });
+  }
+};
+var TrackMixer = class extends DataModelObject {
+  static className = "MixerDevice";
+  get volume() {
+    return this.objectRegistry.getObjectFromHandle(this.dataModel.mixerdeviceGetVolume(this.handle), DeviceParameter);
+  }
+  get panning() {
+    return this.objectRegistry.getObjectFromHandle(this.dataModel.mixerdeviceGetPanning(this.handle), DeviceParameter);
+  }
+  get sends() {
+    return this.dataModel.mixerdeviceGetSends(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, DeviceParameter));
+  }
+};
+var Track = class Track2 extends DataModelObject {
+  static className = "Track";
+  get name() {
+    return this.dataModel.trackGetName(this.handle);
+  }
+  set name(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.trackSetName(this.handle, value);
+    });
+  }
+  get mute() {
+    return this.dataModel.trackGetMute(this.handle);
+  }
+  set mute(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.trackSetMute(this.handle, value);
+    });
+  }
+  get solo() {
+    return this.dataModel.trackGetSolo(this.handle);
+  }
+  set solo(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.trackSetSolo(this.handle, value);
+    });
+  }
+  get mutedViaSolo() {
+    return this.dataModel.trackGetMutedViaSolo(this.handle);
+  }
+  get arm() {
+    return this.dataModel.trackGetArm(this.handle);
+  }
+  set arm(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.trackSetArm(this.handle, value);
+    });
+  }
+  get clipSlots() {
+    return this.dataModel.trackGetClipSlots(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, ClipSlot));
+  }
+  get takeLanes() {
+    return this.dataModel.trackGetTakeLanes(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, TakeLane));
+  }
+  get arrangementClips() {
+    return this.dataModel.trackGetArrangementClips(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, Clip));
+  }
+  get groupTrack() {
+    const handle = this.dataModel.trackGetGroupTrack(this.handle);
+    return handle ? this.objectRegistry.getObjectFromHandle(handle, Track2) : null;
+  }
+  get devices() {
+    return this.dataModel.trackGetDevices(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, Device));
+  }
+  get mixer() {
+    return this.objectRegistry.getObjectFromHandle(this.dataModel.trackGetMixerDevice(this.handle), TrackMixer);
+  }
+  /** Appended to the end of {@link takeLanes}. */
+  createTakeLane() {
+    return createAsync(this.dataModel, this.objectRegistry, TakeLane, this.dataModel.trackCreateTakeLane, this.handle);
+  }
+  /**
+  * Inserts a built-in Live device with its default preset into the track's device chain.
+  * Only devices native to Live are supported — third-party plug-ins cannot be loaded this way.
+  *
+  * @param deviceName - The name of the built-in Live device (e.g. `"Reverb"`, `"Auto Filter"`).
+  * @param index - Zero-based position in the device chain at which to insert.
+  */
+  insertDevice(deviceName, index) {
+    return createAsync(this.dataModel, this.objectRegistry, Device, this.dataModel.trackInsertDevice, this.handle, deviceName, BigInt(index));
+  }
+  /**
+  * Deletes a device from this track's device chain. Await the returned
+  * promise to ensure the deletion has been fully processed.
+  */
+  deleteDevice(device) {
+    return invokeAsync(this.dataModel, this.dataModel.trackDeleteDevice, this.handle, device.handle);
+  }
+  /** The duplicate is inserted directly after the original in the device chain. */
+  duplicateDevice(device) {
+    return createAsync(this.dataModel, this.objectRegistry, Device, this.dataModel.trackDuplicateDevice, this.handle, device.handle);
+  }
+  /**
+  * Deletes an arrangement clip. For session clips, use {@link ClipSlot.deleteClip}.
+  * Await the returned promise to ensure the deletion has been fully processed.
+  */
+  deleteClip(clip) {
+    return invokeAsync(this.dataModel, this.dataModel.trackDeleteClip, this.handle, clip.handle);
+  }
+  /**
+  * Deletes clips within the range. Clips that overlap a boundary are truncated
+  * to the range edge rather than fully deleted.
+  *
+  * @param startTime - Start of the range in beats.
+  * @param endTime - End of the range in beats.
+  */
+  clearClipsInRange(startTime, endTime) {
+    return invokeAsync(this.dataModel, this.dataModel.trackClearClipsInRange, this.handle, startTime, endTime);
+  }
+};
+var AudioTrack = class extends Track {
+  static className = "AudioTrack";
+  /**
+  * Creates an audio clip from a file in the track's arrangement timeline.
+  *
+  * @param args.filePath - Absolute path to the audio file.
+  * @param args.startTime - Position in the arrangement timeline in beats.
+  * @param args.duration - Length of the clip on the arrangement timeline,
+  *   in beats. Capped at the sample's natural length for non-looping clips;
+  *   looping clips repeat to fill the full length. Defaults to the sample's
+  *   natural length at the current tempo when omitted.
+  * @param args.isWarped - Whether warping is enabled. Defaults to the clip's
+  *   saved `.asd` settings if present, otherwise Live's "Auto-Warp" preference.
+  *   Must be provided when `loopSettings` is provided.
+  * @param args.loopSettings - Initial loop settings. Requires `isWarped` to be
+  *   defined. If `isWarped` is `false`, `loopSettings.looping` must be `false`.
+  *
+  * @example
+  * const clip = await track.createAudioClip({ filePath: '/samples/kick.wav', startTime: 0 });
+  *
+  * @example
+  * const clip = await track.createAudioClip({
+  *   filePath: '/samples/ambient.wav',
+  *   startTime: 16,
+  *   isWarped: false,
+  * });
+  *
+  * @example
+  * // Clip view: Start=beat 0, End=beat 2, Loop position=beat 0, Loop length=1 beat.
+  * const clip = await track.createAudioClip({
+  *   filePath: '/samples/loop.wav',
+  *   startTime: 0,
+  *   isWarped: true,
+  *   loopSettings: { looping: true, startMarker: 0, endMarker: 2, loopStart: 0, loopEnd: 1 },
+  * });
+  *
+  * @example
+  * const clip = await track.createAudioClip({
+  *   filePath: '/samples/loop.wav',
+  *   startTime: 0,
+  *   isWarped: true,
+  *   duration: 8,
+  *   loopSettings: { looping: true, startMarker: 0, endMarker: 2, loopStart: 0, loopEnd: 2 },
+  * });
+  */
+  createAudioClip(args) {
+    return createAsync(this.dataModel, this.objectRegistry, AudioClip, this.dataModel.trackCreateAudioClip, this.handle, {
+      duration: args.duration,
+      filePath: args.filePath,
+      isWarped: args.isWarped,
+      loopSettings: args.loopSettings,
+      startTime: args.startTime
+    });
+  }
+};
+var CuePoint = class extends DataModelObject {
+  static className = "CuePoint";
+  get time() {
+    return this.dataModel.cuePointGetTime(this.handle);
+  }
+  get name() {
+    return this.dataModel.cuePointGetName(this.handle);
+  }
+  set name(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.cuePointSetName(this.handle, value);
+    });
+  }
+};
+var MidiTrack = class extends Track {
+  static className = "MidiTrack";
+  /**
+  * @param startTime - Position in the arrangement in beats.
+  * @param duration - Length of the clip in beats.
+  */
+  createMidiClip(startTime, duration) {
+    return createAsync(this.dataModel, this.objectRegistry, MidiClip, this.dataModel.trackCreateMidiClip, this.handle, startTime, duration);
+  }
+};
+var Scene = class extends DataModelObject {
+  static className = "Scene";
+  get name() {
+    return this.dataModel.sceneGetName(this.handle);
+  }
+  set name(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.sceneSetName(this.handle, value);
+    });
+  }
+  get tempo() {
+    return this.dataModel.sceneGetTempo(this.handle);
+  }
+  get signatureNumerator() {
+    return this.dataModel.sceneGetSignatureNumerator(this.handle);
+  }
+  get signatureDenominator() {
+    return this.dataModel.sceneGetSignatureDenominator(this.handle);
+  }
+};
+var Song = class extends DataModelObject {
+  static className = "Song";
+  /** Regular tracks only — excludes return tracks and the main track. */
+  get tracks() {
+    return this.dataModel.songGetTracks(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, Track));
+  }
+  get returnTracks() {
+    return this.dataModel.songGetReturnTracks(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, Track));
+  }
+  get mainTrack() {
+    return this.objectRegistry.getObjectFromHandle(this.dataModel.songGetMainTrack(this.handle), Track);
+  }
+  get scenes() {
+    return this.dataModel.songGetScenes(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, Scene));
+  }
+  get cuePoints() {
+    return this.dataModel.songGetCuePoints(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, CuePoint));
+  }
+  get tempo() {
+    return this.dataModel.songGetTempo(this.handle);
+  }
+  set tempo(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.songSetTempo(this.handle, value);
+    });
+  }
+  /**
+  * The current arrangement grid quantization. Use with {@link gridIsTriplet} to
+  * determine the full grid setting.
+  */
+  get gridQuantization() {
+    return this.dataModel.songGetGridQuantization(this.handle);
+  }
+  /**
+  * Whether the arrangement grid uses triplet subdivisions of the current
+  * {@link gridQuantization} value.
+  */
+  get gridIsTriplet() {
+    return this.dataModel.songGetGridIsTriplet(this.handle);
+  }
+  /**
+  * The root note of the scale currently selected in Live, as a MIDI note number
+  * from 0 (C) to 11 (B).
+  */
+  get rootNote() {
+    return Number(this.dataModel.songGetRootNote(this.handle));
+  }
+  /** The name of the scale selected in Live, as shown in the Current Scale Name chooser. */
+  get scaleName() {
+    return this.dataModel.songGetScaleName(this.handle);
+  }
+  /** Whether Live's Scale Mode is enabled. */
+  get scaleMode() {
+    return this.dataModel.songGetScaleMode(this.handle);
+  }
+  /** The intervals of the current scale as semitone offsets from the root note. */
+  get scaleIntervals() {
+    return this.dataModel.songGetScaleIntervals(this.handle).map(Number);
+  }
+  /** Inserted after the last selected track, or appended if no track is selected. */
+  createAudioTrack() {
+    return createAsync(this.dataModel, this.objectRegistry, AudioTrack, this.dataModel.songCreateAudioTrack, this.handle);
+  }
+  /** Inserted after the last selected track, or appended if no track is selected. */
+  createMidiTrack() {
+    return createAsync(this.dataModel, this.objectRegistry, MidiTrack, this.dataModel.songCreateMidiTrack, this.handle);
+  }
+  /**
+  * @param index - 0-based insert position in the range `[0, song.scenes.length]`.
+  * Pass `-1` to append at the end.
+  */
+  createScene(index) {
+    return createAsync(this.dataModel, this.objectRegistry, Scene, this.dataModel.songCreateScene, this.handle, BigInt(index));
+  }
+  /**
+  * Deletes a track from the song. Await the returned promise to ensure the
+  * deletion has been fully processed.
+  */
+  deleteTrack(track) {
+    return invokeAsync(this.dataModel, this.dataModel.songDeleteTrack, this.handle, track.handle);
+  }
+  /**
+  * Deletes a scene from the song. Await the returned promise to ensure the
+  * deletion has been fully processed.
+  */
+  deleteScene(scene) {
+    return invokeAsync(this.dataModel, this.dataModel.songDeleteScene, this.handle, scene.handle);
+  }
+  /** Duplicates the track. The duplicate is inserted immediately after the original. */
+  duplicateTrack(track) {
+    return createAsync(this.dataModel, this.objectRegistry, Track, this.dataModel.songDuplicateTrack, this.handle, track.handle);
+  }
+  /** Duplicates the scene. The duplicate is inserted immediately after the original. */
+  duplicateScene(scene) {
+    return createAsync(this.dataModel, this.objectRegistry, Scene, this.dataModel.songDuplicateScene, this.handle, scene.handle);
+  }
+  /** @param time - Position in the arrangement in beats. */
+  createCuePoint(time) {
+    return createAsync(this.dataModel, this.objectRegistry, CuePoint, this.dataModel.songCreateCuePoint, this.handle, time);
+  }
+  /**
+  * Deletes a cue point from the song. Await the returned promise to ensure
+  * the deletion has been fully processed.
+  */
+  deleteCuePoint(cuePoint) {
+    return invokeAsync(this.dataModel, this.dataModel.songDeleteCuePoint, this.handle, cuePoint.handle);
+  }
+};
+var Application = class extends DataModelObject {
+  static className = "Application";
+  get song() {
+    return this.objectRegistry.getObjectFromHandle(this.dataModel.rootGetSong(this.handle), Song);
+  }
+};
+var Commands = class {
+  module;
+  /** @internal */
+  constructor(module2) {
+    this.module = module2;
+  }
+  /**
+  * Registers a command that can be invoked by Live or via {@link Commands.executeCommand}.
+  *
+  * @param commandId - A unique string identifier for this command.
+  * @param callback - Called when the command is invoked. May receive arguments passed by the invoker.
+  */
+  registerCommand(commandId, callback) {
+    this.module.registerCommand(commandId, callback);
+  }
+  /**
+  * Programmatically invokes a registered command.
+  *
+  * @param commandId - The ID of the command to invoke.
+  * @param args - Arguments to pass to the command's callback.
+  */
+  executeCommand(commandId, ...args) {
+    this.module.executeCommand(commandId, ...args);
+  }
+};
+var ChainMixer = class extends DataModelObject {
+  static className = "ChainMixerDevice";
+  get volume() {
+    return this.objectRegistry.getObjectFromHandle(this.dataModel.chainmixerdeviceGetVolume(this.handle), DeviceParameter);
+  }
+  get panning() {
+    return this.objectRegistry.getObjectFromHandle(this.dataModel.chainmixerdeviceGetPanning(this.handle), DeviceParameter);
+  }
+  get sends() {
+    return this.dataModel.chainmixerdeviceGetSends(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, DeviceParameter));
+  }
+};
+var Chain = class extends DataModelObject {
+  static className = "Chain";
+  get devices() {
+    return this.dataModel.chainGetDevices(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, Device));
+  }
+  get mixer() {
+    return this.objectRegistry.getObjectFromHandle(this.dataModel.chainGetMixerDevice(this.handle), ChainMixer);
+  }
+  /**
+  * Inserts a built-in Live device with its default preset into the chain.
+  * Only devices native to Live are supported — third-party plug-ins cannot be loaded this way.
+  *
+  * @param deviceName - The name of the built-in Live device (e.g. `"Reverb"`, `"Auto Filter"`).
+  * @param index - Zero-based position in the device chain at which to insert.
+  */
+  insertDevice(deviceName, index) {
+    return createAsync(this.dataModel, this.objectRegistry, Device, this.dataModel.chainInsertDevice, this.handle, deviceName, BigInt(index));
+  }
+  /**
+  * Deletes a device from this chain. Await the returned promise to ensure
+  * the deletion has been fully processed.
+  */
+  deleteDevice(device) {
+    return invokeAsync(this.dataModel, this.dataModel.chainDeleteDevice, this.handle, device.handle);
+  }
+  /** The duplicate is inserted directly after the original in the device chain. */
+  duplicateDevice(device) {
+    return createAsync(this.dataModel, this.objectRegistry, Device, this.dataModel.chainDuplicateDevice, this.handle, device.handle);
+  }
+};
+var DrumChain = class extends Chain {
+  static className = "DrumChain";
+  get receivingNote() {
+    return Number(this.dataModel.drumchainGetReceivingNote(this.handle));
+  }
+  set receivingNote(value) {
+    this.dataModel.withinTransaction(() => {
+      this.dataModel.drumchainSetReceivingNote(this.handle, BigInt(value));
+    });
+  }
+};
+var RackDevice = class extends Device {
+  static className = "RackDevice";
+  get chains() {
+    return this.dataModel.rackdeviceGetChains(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, Chain));
+  }
+  /** @param index - 0-based insert position in the range `[0, rack.chains.length]`. */
+  insertChain(index) {
+    return createAsync(this.dataModel, this.objectRegistry, Chain, this.dataModel.rackdeviceInsertChain, this.handle, BigInt(index));
+  }
+};
+var DrumRack = class extends RackDevice {
+  static className = "DrumRackDevice";
+  get chains() {
+    return this.dataModel.rackdeviceGetChains(this.handle).map((handle) => this.objectRegistry.getObjectFromHandle(handle, DrumChain));
+  }
+};
+var Sample = class extends DataModelObject {
+  static className = "Sample";
+  get filePath() {
+    return this.dataModel.sampleGetFilePath(this.handle);
+  }
+};
+var Simpler = class extends Device {
+  static className = "Simpler";
+  get sample() {
+    const handle = this.dataModel.simplerGetSample(this.handle);
+    return handle ? this.objectRegistry.getObjectFromHandle(handle, Sample) : null;
+  }
+  /** Replaces the loaded sample with the audio file at the given absolute path. */
+  replaceSample(filePath) {
+    return createAsync(this.dataModel, this.objectRegistry, Sample, this.dataModel.simplerReplaceSample, this.handle, filePath);
+  }
+};
+var dataModelClasses = [
+  Application,
+  Song,
+  AudioTrack,
+  MidiTrack,
+  Track,
+  AudioClip,
+  MidiClip,
+  Clip,
+  ClipSlot,
+  TakeLane,
+  Simpler,
+  DrumRack,
+  RackDevice,
+  Device,
+  Sample,
+  DrumChain,
+  Chain,
+  Scene,
+  CuePoint,
+  DeviceParameter,
+  TrackMixer,
+  ChainMixer
+];
+var DataModelObjectRegistry = class {
+  cache = /* @__PURE__ */ new Map();
+  dataModel;
+  /** @internal */
+  constructor(dataModel) {
+    this.dataModel = dataModel;
+  }
+  getOrCreateObjectFromHandle(handle) {
+    const cached = this.cache.get(handle.id);
+    if (cached) return cached;
+    const ModelClass = dataModelClasses.find((cls) => this.dataModel.getObjectIsOfClass(handle, cls.className));
+    if (!ModelClass) throw new Error("Unknown object type");
+    const obj = new ModelClass(handle, this.dataModel, this);
+    this.cache.set(handle.id, obj);
+    return obj;
+  }
+  /**
+  * Resolves a {@link Handle} into a typed SDK object.
+  *
+  * Pass {@link DataModelObject} as `type` when the exact type of the handle is not known
+  * in advance, then use `instanceof` to branch on the actual type:
+  *
+  * ```ts
+  * const obj = objects.getObjectFromHandle(handle, DataModelObject);
+  * if (obj instanceof ClipSlot) {
+  *   // ...
+  * }
+  * ```
+  *
+  * Throws if the underlying object has been deleted, if it is of a different
+  * type than `type`, or if its type is not recognised.
+  *
+  * @param handle - The handle to resolve.
+  * @param type - The expected SDK class (e.g. `ClipSlot`).
+  */
+  getObjectFromHandle(handle, type) {
+    const obj = this.getOrCreateObjectFromHandle(handle);
+    if (!(obj instanceof type)) throw new Error("Object of incorrect type");
+    return obj;
+  }
+};
+var Environment = class {
+  module;
+  /** @internal */
+  constructor(module2) {
+    this.module = module2;
+  }
+  /**
+  * Per-extension directory for persistent storage. Use it for configuration, credentials,
+  * and cached state — anything that should survive across Live sessions.
+  */
+  get storageDirectory() {
+    return this.module.storageDirectory;
+  }
+  /**
+  * Per-extension directory for temporary files, such as intermediate audio or analysis
+  * results. May be cleaned up between sessions.
+  */
+  get tempDirectory() {
+    return this.module.tempDirectory;
+  }
+  /** Live's current UI language as an uppercase ISO 639-1 code (e.g. `"EN"`, `"DE"`, `"JA"`). */
+  get language() {
+    return this.module.language;
+  }
+};
+var Resources = class {
+  module;
+  /** @internal */
+  constructor(module2) {
+    this.module = module2;
+  }
+  /**
+  * Renders the pre-effects audio of a track in the arrangement between two beat
+  * positions. Returns a path to a WAV file written to the extension's temp directory.
+  */
+  renderPreFxAudio(track, startTime, endTime) {
+    return new Promise((resolve, reject) => {
+      this.module.renderPreFxAudio(track.handle, {
+        endTime,
+        startTime
+      }, resolve, reject);
+    });
+  }
+  /**
+  * Copies a file into the Live project folder so that Live manages it.
+  * Returns the path to the imported copy. Use the returned path in subsequent API
+  * calls, not the original.
+  */
+  importIntoProject(filePath) {
+    return new Promise((resolve, reject) => {
+      this.module.importIntoProject(filePath, resolve, reject);
+    });
+  }
+};
+var toProgressOptions = (text, progress) => typeof progress === "number" ? {
+  progress,
+  text
+} : { text };
+var Ui = class {
+  module;
+  /** @internal */
+  constructor(module2) {
+    this.module = module2;
+  }
+  /**
+  * Registers a context menu action in the given {@link ContextMenuScope}.
+  *
+  * When the user triggers the action, Live invokes the command identified by
+  * `commandId`. Depending on the scope, the command receives either the triggered
+  * object's {@link Handle}, an {@link ArrangementSelection}, or a
+  * {@link ClipSlotSelection} as its first argument.
+  *
+  * Returns a function that unregisters the action when called.
+  */
+  registerContextMenuAction(scope, title, commandId) {
+    return new Promise((resolve) => {
+      this.module.registerContextMenuAction(scope, title, commandId, (unregister) => {
+        resolve(() => new Promise((done) => {
+          unregister(done);
+        }));
+      });
+    });
+  }
+  /**
+  * Opens a modal dialog that loads the given URL. Supported URL schemes are
+  * `file:`, `data:`, `https:`, and `http://localhost`.
+  *
+  * To return a result and close the dialog, the dialog's HTML must post the message
+  * `{ method: "close_and_send", params: [resultString] }` to the host's message
+  * handler — `window.webkit.messageHandlers.live.postMessage` on macOS or
+  * `window.chrome.webview.postMessage` on Windows. The returned promise resolves
+  * with that string.
+  *
+  * Rejects if `url` is malformed or an unexpected error occurred.
+  */
+  showModalDialog(url, width, height) {
+    return new Promise((resolve, reject) => {
+      this.module.showModalDialog(url, width, height, resolve, reject);
+    });
+  }
+  /**
+  * Shows a progress dialog while `callback` runs.
+  * The callback receives an `update` function to change the text/progress
+  * (progress is a percentage, 0–100), and an `AbortSignal` that fires if
+  * the user cancels the dialog.
+  * The dialog closes automatically when the callback resolves or rejects.
+  *
+  * @example
+  * ```ts
+  * const wavPath = await ui.withinProgressDialog(
+  *   "Rendering audio…",
+  *   { progress: 0 },
+  *   async (update, signal) => {
+  *     await update("Analysing…", 30);
+  *     if (signal.aborted) return;
+  *     await update("Rendering…", 70);
+  *     return await resources.renderPreFxAudio(track, startBeat, endBeat);
+  *   },
+  * );
+  * ```
+  */
+  withinProgressDialog(text, options, callback) {
+    const ac = new AbortController();
+    return new Promise((resolve, reject) => {
+      this.module.showProgressDialog(toProgressOptions(text, options.progress), ({ update, close }) => {
+        const asyncUpdate = (updateText, progress) => new Promise((resolveUpdate) => {
+          update(toProgressOptions(updateText, progress), resolveUpdate);
+        });
+        const asyncClose = () => new Promise((done) => {
+          close(done);
+        });
+        callback(asyncUpdate, ac.signal).finally(asyncClose).then(resolve).catch(reject);
+      }, () => {
+        ac.abort();
+      });
+    });
+  }
+};
+var initialize = (context, apiVersion) => {
+  const { commands, dataModel, environment, resources, ui } = context.initializeExtensionHost({ apiVersion });
+  const objectRegistry = new DataModelObjectRegistry(dataModel);
+  return {
+    application: objectRegistry.getObjectFromHandle(dataModel.getRoot(), Application),
+    commands: new Commands(commands),
+    environment: new Environment(environment),
+    getObjectFromHandle: objectRegistry.getObjectFromHandle.bind(objectRegistry),
+    resources: new Resources(resources),
+    ui: new Ui(ui),
+    withinTransaction: dataModel.withinTransaction.bind(dataModel)
+  };
+};
+
+// src/engine.ts
+var import_node_child_process = require("node:child_process");
+var ChordgenEngine = class {
+  constructor(cwd, pythonCmd = "python") {
+    this.cwd = cwd;
+    this.pythonCmd = pythonCmd;
+  }
+  cwd;
+  pythonCmd;
+  proc = null;
+  buffer = "";
+  pending = /* @__PURE__ */ new Map();
+  nextId = 1;
+  getProcess() {
+    if (this.proc) return this.proc;
+    const proc = (0, import_node_child_process.spawn)(this.pythonCmd, ["-u", "-m", "chordgen.server"], {
+      cwd: this.cwd,
+      stdio: ["pipe", "pipe", "pipe"],
+      // PYTHONDONTWRITEBYTECODE: the bundled engine dir may not be writable
+      // under the extension sandbox, so keep Python from writing __pycache__.
+      // PYTHONUTF8: we write UTF-8 to stdin but Python defaults stdio to
+      // cp1252 on Windows, which garbles non-ASCII input like "iiø7" or "♭".
+      env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1", PYTHONUTF8: "1" }
+    });
+    proc.stdout.on("data", (chunk) => {
+      this.buffer += chunk.toString("utf8");
+      let nl;
+      while ((nl = this.buffer.indexOf("\n")) !== -1) {
+        const line = this.buffer.slice(0, nl).trim();
+        this.buffer = this.buffer.slice(nl + 1);
+        if (!line) continue;
+        let msg;
+        try {
+          msg = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        const id = msg["id"];
+        if (id === void 0) continue;
+        const pending = this.pending.get(id);
+        if (!pending) continue;
+        this.pending.delete(id);
+        if ("error" in msg) {
+          pending.reject(new Error(String(msg["error"])));
+        } else {
+          pending.resolve(msg["result"]);
+        }
+      }
+    });
+    proc.stderr.on("data", (chunk) => {
+      console.error(`[chordgen] ${chunk.toString("utf8").trimEnd()}`);
+    });
+    proc.on("error", (err) => {
+      console.error(`[chordgen] failed to start: ${err.message}`);
+      this.drainPending(err);
+      this.proc = null;
+    });
+    proc.on("exit", (code) => {
+      if (code !== 0 && code !== null) {
+        console.error(`[chordgen] process exited with code ${code}`);
+      }
+      this.drainPending(new Error(`chordgen process exited (code ${code})`));
+      this.proc = null;
+    });
+    this.proc = proc;
+    return proc;
+  }
+  drainPending(err) {
+    for (const [, pending] of this.pending) pending.reject(err);
+    this.pending.clear();
+  }
+  send(op, params = {}) {
+    const proc = this.getProcess();
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, {
+        resolve: (v) => resolve(v),
+        reject
+      });
+      proc.stdin.write(JSON.stringify({ op, id, ...params }) + "\n");
+    });
+  }
+  dispose() {
+    this.proc?.kill();
+    this.proc = null;
+  }
+};
+
+// src/extension.ts
+var path = __toESM(require("node:path"), 1);
+
+// src/interface.html
+var interface_default = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -21,14 +1023,80 @@
     function generate() {
       const keyIdx = Number(document.getElementById('key').value);
       closeWithResult({
-        key:         keyIdx,
-        keyName:     KEY_NAMES[keyIdx],
-        scale:       document.getElementById('scale').value,
-        template:    document.getElementById('template').value,
-        voicing:     document.getElementById('voicing').value,
-        sevenths:    document.getElementById('sevenths').checked,
-        snapToScale: document.getElementById('snapToScale').checked,
+        key:               keyIdx,
+        keyName:           KEY_NAMES[keyIdx],
+        scale:             document.getElementById('scale').value,
+        template:          document.getElementById('template').value,
+        voicing:           document.getElementById('voicing').value,
+        sevenths:          document.getElementById('sevenths').checked,
+        snapToScale:       document.getElementById('snapToScale').checked,
+        customProgression: document.getElementById('custom').value.trim(),
       });
+    }
+
+    // \u2500\u2500 Live preview of the custom progression \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    // Validates against the engine's HTTP endpoint (same process the
+    // extension talks to over stdio). Preview is best-effort UX sugar: the
+    // extension re-parses authoritatively on submit, so if the HTTP port is
+    // unavailable we just show nothing.
+
+    const ENGINE = 'http://127.0.0.1:7842';
+    const ROMAN_RE = /^[b#\u266D\u266F]?[ivIV]/;
+    let previewTimer = null;
+    let previewSeq = 0;
+
+    async function engineOp(op, params) {
+      const r = await fetch(ENGINE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ op, ...params }),
+      });
+      const data = await r.json();
+      if (data.error) throw new Error(data.error);
+      return data.result;
+    }
+
+    async function parseToken(tok, key, scale) {
+      const asRoman = () => engineOp('parse_roman', { roman: tok, key, scale });
+      const asName  = () => engineOp('parse_chord', { name: tok });
+      const [first, second] = ROMAN_RE.test(tok) ? [asRoman, asName] : [asName, asRoman];
+      try { return (await first()).chord.name; }
+      catch { return (await second()).chord.name; }
+    }
+
+    async function updatePreview() {
+      const text = document.getElementById('custom').value.trim();
+      const preview = document.getElementById('preview');
+      document.getElementById('template').disabled = !!text;
+
+      if (!text) { preview.innerHTML = ''; return; }
+
+      const key = Number(document.getElementById('key').value);
+      const scale = document.getElementById('scale').value;
+      const tokens = text.split(/[\\s,|]+/).filter(Boolean);
+      const seq = ++previewSeq;
+
+      let chips;
+      try {
+        chips = await Promise.all(tokens.map(async tok => {
+          try { return { ok: true, label: await parseToken(tok, key, scale) }; }
+          catch { return { ok: false, label: tok }; }
+        }));
+      } catch { return; } // engine HTTP unreachable \u2014 skip preview entirely
+
+      if (seq !== previewSeq) return; // a newer keystroke superseded this run
+      preview.innerHTML = '';
+      for (const c of chips) {
+        const el = document.createElement('span');
+        el.className = 'chip' + (c.ok ? '' : ' bad');
+        el.textContent = c.ok ? c.label : c.label + ' ?';
+        preview.appendChild(el);
+      }
+    }
+
+    function schedulePreview() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(updatePreview, 200);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -36,6 +1104,9 @@
         if (e.key === 'Enter') generate();
         if (e.key === 'Escape') closeWithResult(null);
       });
+      document.getElementById('custom').addEventListener('input', schedulePreview);
+      document.getElementById('key').addEventListener('change', schedulePreview);
+      document.getElementById('scale').addEventListener('change', schedulePreview);
     });
   </script>
   <style>
@@ -105,6 +1176,39 @@
       outline-offset: 0;
     }
     select:focus { outline: 2px solid var(--c-text-dim); }
+    select:disabled { opacity: 0.4; cursor: default; }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--c-input-bg);
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      height: 20px;
+      padding: 0 0.4em;
+      outline-offset: 0;
+    }
+    input[type="text"]:focus { outline: 2px solid var(--c-text-dim); }
+    input[type="text"]::placeholder { color: var(--c-text-dim); }
+
+    .preview {
+      grid-column: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3em;
+      min-height: 1.4em;
+      align-items: center;
+    }
+    .chip {
+      background: var(--c-control-bg);
+      border: 1px solid var(--c-border);
+      border-radius: 0.8em;
+      padding: 0.1em 0.6em;
+      line-height: 1.3;
+    }
+    .chip.bad {
+      color: hsl(0, 65%, 62%);
+      border-color: hsl(0, 65%, 35%);
+    }
 
     .checkbox-row {
       display: flex;
@@ -203,6 +1307,12 @@
       <option value="Circle of fifths">Circle of Fifths</option>
     </select>
 
+    <span class="label">Custom</span>
+    <input type="text" id="custom" spellcheck="false" autocomplete="off"
+           placeholder="ii7 V7 Imaj7 \xB7 bVII \xB7 V7/ii \xB7 Dm7 G7" />
+
+    <div class="preview" id="preview"></div>
+
     <span class="label">Voicing</span>
     <select id="voicing">
       <option value="smooth">Smooth (voice-led)</option>
@@ -232,7 +1342,10 @@
   </div>
 </body>
 </html>
-`;var Ce=`<!DOCTYPE html>
+`;
+
+// src/results.html
+var results_default = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -768,7 +1881,10 @@
   </div>
 </body>
 </html>
-`;var ke=`<!DOCTYPE html>
+`;
+
+// src/palette.html
+var palette_default = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -1140,7 +2256,10 @@
   </div>
 </body>
 </html>
-`;var Ie=`<!DOCTYPE html>
+`;
+
+// src/sessionmap.html
+var sessionmap_default = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -1491,530 +2610,19 @@
   </div>
 </body>
 </html>
-`;var Se=`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<script>
-  const isWebKit = window.webkit?.messageHandlers?.live;
-  const isWebView2 = window.chrome?.webview;
-  function closeWithResult(result) {
-    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
-    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
-    else if (isWebView2) window.chrome.webview.postMessage(msg);
-  }
-</script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 13px;
-    background: #1e1e1e;
-    color: #d4d4d4;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    gap: 16px;
-    padding: 16px;
-  }
-  h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  button.adj {
-    width: 28px; height: 28px;
-    background: #3a3a3a;
-    border: 1px solid #555;
-    border-radius: 4px;
-    color: #d4d4d4;
-    font-size: 18px;
-    cursor: pointer;
-    line-height: 1;
-  }
-  button.adj:hover { background: #4a4a4a; }
-  #display {
-    width: 56px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 700;
-    color: #fff;
-    background: #2a2a2a;
-    border: 1px solid #555;
-    border-radius: 4px;
-    padding: 4px 0;
-  }
-  .presets {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  button.preset {
-    padding: 3px 10px;
-    background: #2a2a2a;
-    border: 1px solid #555;
-    border-radius: 4px;
-    color: #bbb;
-    font-size: 11px;
-    cursor: pointer;
-  }
-  button.preset:hover { background: #3a3a3a; color: #fff; }
-  .actions { display: flex; gap: 8px; margin-top: 4px; }
-  button.primary {
-    padding: 6px 22px;
-    background: #0e639c;
-    border: none;
-    border-radius: 4px;
-    color: #fff;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  button.primary:hover { background: #1177bb; }
-  button.cancel {
-    padding: 6px 16px;
-    background: #3a3a3a;
-    border: 1px solid #555;
-    border-radius: 4px;
-    color: #ccc;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  button.cancel:hover { background: #4a4a4a; }
-</style>
-</head>
-<body>
-<h2>Batch Transpose</h2>
-<div class="row">
-  <button class="adj" id="down">\u2212</button>
-  <div id="display">0</div>
-  <button class="adj" id="up">+</button>
-</div>
-<div class="presets">
-  <button class="preset" data-v="-12">\u221212</button>
-  <button class="preset" data-v="-7">\u22127</button>
-  <button class="preset" data-v="-5">\u22125</button>
-  <button class="preset" data-v="-2">\u22122</button>
-  <button class="preset" data-v="-1">\u22121</button>
-  <button class="preset" data-v="1">+1</button>
-  <button class="preset" data-v="2">+2</button>
-  <button class="preset" data-v="5">+5</button>
-  <button class="preset" data-v="7">+7</button>
-  <button class="preset" data-v="12">+12</button>
-</div>
-<div class="actions">
-  <button class="cancel" id="cancelBtn">Cancel</button>
-  <button class="primary" id="transposeBtn">Transpose</button>
-</div>
-<script>
-  let semitones = 0;
-  const display = document.getElementById("display");
-  function update() {
-    display.textContent = semitones > 0 ? "+" + semitones : String(semitones);
-    display.style.color = semitones === 0 ? "#888" : semitones > 0 ? "#7ec8e3" : "#f28b82";
-  }
-  document.getElementById("up").addEventListener("click", () => { if (semitones < 24) { semitones++; update(); } });
-  document.getElementById("down").addEventListener("click", () => { if (semitones > -24) { semitones--; update(); } });
-  document.querySelectorAll(".preset").forEach(btn => {
-    btn.addEventListener("click", () => { semitones = parseInt(btn.dataset.v, 10); update(); });
-  });
-  document.getElementById("transposeBtn").addEventListener("click", () => {
-    if (semitones === 0) { closeWithResult(null); return; }
-    closeWithResult({ action: "transpose", semitones });
-  });
-  document.getElementById("cancelBtn").addEventListener("click", () => closeWithResult(null));
-</script>
-</body>
-</html>
-`;var Ee=`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<script>
-  const isWebKit = window.webkit?.messageHandlers?.live;
-  const isWebView2 = window.chrome?.webview;
-  function closeWithResult(result) {
-    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
-    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
-    else if (isWebView2) window.chrome.webview.postMessage(msg);
-  }
-</script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 13px;
-    background: #1e1e1e;
-    color: #d4d4d4;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-  }
-  header {
-    padding: 12px 16px 10px;
-    border-bottom: 1px solid #333;
-    flex-shrink: 0;
-  }
-  header h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }
-  header p { font-size: 11px; color: #888; margin-top: 3px; }
-  .list-wrap {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 0 8px;
-  }
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    font-size: 11px;
-    color: #666;
-    text-align: left;
-    padding: 6px 8px 5px;
-    border-bottom: 1px solid #2a2a2a;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    position: sticky;
-    top: 0;
-    background: #1e1e1e;
-    z-index: 1;
-  }
-  tbody tr { border-bottom: 1px solid #252525; }
-  tbody tr:hover { background: #252525; }
-  tbody td { padding: 5px 8px; vertical-align: middle; }
-  .swatch {
-    display: inline-block;
-    width: 9px; height: 9px;
-    border-radius: 50%;
-    margin-right: 5px;
-    vertical-align: middle;
-    flex-shrink: 0;
-  }
-  .key-cell { display: flex; align-items: center; }
-  .compat-badge {
-    display: inline-block;
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-  .badge-same    { background: #1f4d2a; color: #7ec87e; }
-  .badge-rel     { background: #1a3d4d; color: #7ec8e3; }
-  .badge-dom     { background: #4d3a1a; color: #e3b87e; }
-  .badge-sub     { background: #3a1a4d; color: #c87ee3; }
-  .badge-par     { background: #2a2a2a; color: #aaa; }
-  .track-name    { font-size: 11px; color: #777; }
+`;
 
-  /* Section dividers */
-  .section-header {
-    font-size: 10px;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    font-weight: 600;
-    padding: 10px 8px 4px;
-    border-top: 1px solid #2a2a2a;
-    margin-top: 4px;
-  }
-  .section-header:first-child { border-top: none; margin-top: 0; }
+// src/transpose.html
+var transpose_default = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<script>\n  const isWebKit = window.webkit?.messageHandlers?.live;\n  const isWebView2 = window.chrome?.webview;\n  function closeWithResult(result) {\n    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };\n    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);\n    else if (isWebView2) window.chrome.webview.postMessage(msg);\n  }\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n    font-size: 13px;\n    background: #1e1e1e;\n    color: #d4d4d4;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    height: 100vh;\n    gap: 16px;\n    padding: 16px;\n  }\n  h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }\n  .row {\n    display: flex;\n    align-items: center;\n    gap: 10px;\n  }\n  button.adj {\n    width: 28px; height: 28px;\n    background: #3a3a3a;\n    border: 1px solid #555;\n    border-radius: 4px;\n    color: #d4d4d4;\n    font-size: 18px;\n    cursor: pointer;\n    line-height: 1;\n  }\n  button.adj:hover { background: #4a4a4a; }\n  #display {\n    width: 56px;\n    text-align: center;\n    font-size: 20px;\n    font-weight: 700;\n    color: #fff;\n    background: #2a2a2a;\n    border: 1px solid #555;\n    border-radius: 4px;\n    padding: 4px 0;\n  }\n  .presets {\n    display: flex;\n    gap: 6px;\n    flex-wrap: wrap;\n    justify-content: center;\n  }\n  button.preset {\n    padding: 3px 10px;\n    background: #2a2a2a;\n    border: 1px solid #555;\n    border-radius: 4px;\n    color: #bbb;\n    font-size: 11px;\n    cursor: pointer;\n  }\n  button.preset:hover { background: #3a3a3a; color: #fff; }\n  .actions { display: flex; gap: 8px; margin-top: 4px; }\n  button.primary {\n    padding: 6px 22px;\n    background: #0e639c;\n    border: none;\n    border-radius: 4px;\n    color: #fff;\n    font-size: 13px;\n    cursor: pointer;\n    font-weight: 600;\n  }\n  button.primary:hover { background: #1177bb; }\n  button.cancel {\n    padding: 6px 16px;\n    background: #3a3a3a;\n    border: 1px solid #555;\n    border-radius: 4px;\n    color: #ccc;\n    font-size: 13px;\n    cursor: pointer;\n  }\n  button.cancel:hover { background: #4a4a4a; }\n</style>\n</head>\n<body>\n<h2>Batch Transpose</h2>\n<div class="row">\n  <button class="adj" id="down">\u2212</button>\n  <div id="display">0</div>\n  <button class="adj" id="up">+</button>\n</div>\n<div class="presets">\n  <button class="preset" data-v="-12">\u221212</button>\n  <button class="preset" data-v="-7">\u22127</button>\n  <button class="preset" data-v="-5">\u22125</button>\n  <button class="preset" data-v="-2">\u22122</button>\n  <button class="preset" data-v="-1">\u22121</button>\n  <button class="preset" data-v="1">+1</button>\n  <button class="preset" data-v="2">+2</button>\n  <button class="preset" data-v="5">+5</button>\n  <button class="preset" data-v="7">+7</button>\n  <button class="preset" data-v="12">+12</button>\n</div>\n<div class="actions">\n  <button class="cancel" id="cancelBtn">Cancel</button>\n  <button class="primary" id="transposeBtn">Transpose</button>\n</div>\n<script>\n  let semitones = 0;\n  const display = document.getElementById("display");\n  function update() {\n    display.textContent = semitones > 0 ? "+" + semitones : String(semitones);\n    display.style.color = semitones === 0 ? "#888" : semitones > 0 ? "#7ec8e3" : "#f28b82";\n  }\n  document.getElementById("up").addEventListener("click", () => { if (semitones < 24) { semitones++; update(); } });\n  document.getElementById("down").addEventListener("click", () => { if (semitones > -24) { semitones--; update(); } });\n  document.querySelectorAll(".preset").forEach(btn => {\n    btn.addEventListener("click", () => { semitones = parseInt(btn.dataset.v, 10); update(); });\n  });\n  document.getElementById("transposeBtn").addEventListener("click", () => {\n    if (semitones === 0) { closeWithResult(null); return; }\n    closeWithResult({ action: "transpose", semitones });\n  });\n  document.getElementById("cancelBtn").addEventListener("click", () => closeWithResult(null));\n</script>\n</body>\n</html>\n';
 
-  /* Progression suggestions */
-  .sugg-table tbody td { padding: 5px 8px; }
-  .template-cell {
-    font-size: 11px;
-    color: #777;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-  .chords-cell {
-    font-size: 12px;
-    color: #bbb;
-    letter-spacing: 0.02em;
-  }
+// src/compatible.html
+var compatible_default = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<script>\n  const isWebKit = window.webkit?.messageHandlers?.live;\n  const isWebView2 = window.chrome?.webview;\n  function closeWithResult(result) {\n    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };\n    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);\n    else if (isWebView2) window.chrome.webview.postMessage(msg);\n  }\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n    font-size: 13px;\n    background: #1e1e1e;\n    color: #d4d4d4;\n    display: flex;\n    flex-direction: column;\n    height: 100vh;\n    overflow: hidden;\n  }\n  header {\n    padding: 12px 16px 10px;\n    border-bottom: 1px solid #333;\n    flex-shrink: 0;\n  }\n  header h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }\n  header p { font-size: 11px; color: #888; margin-top: 3px; }\n  .list-wrap {\n    flex: 1;\n    overflow-y: auto;\n    padding: 0 0 8px;\n  }\n  table { width: 100%; border-collapse: collapse; }\n  thead th {\n    font-size: 11px;\n    color: #666;\n    text-align: left;\n    padding: 6px 8px 5px;\n    border-bottom: 1px solid #2a2a2a;\n    font-weight: 500;\n    text-transform: uppercase;\n    letter-spacing: 0.04em;\n    position: sticky;\n    top: 0;\n    background: #1e1e1e;\n    z-index: 1;\n  }\n  tbody tr { border-bottom: 1px solid #252525; }\n  tbody tr:hover { background: #252525; }\n  tbody td { padding: 5px 8px; vertical-align: middle; }\n  .swatch {\n    display: inline-block;\n    width: 9px; height: 9px;\n    border-radius: 50%;\n    margin-right: 5px;\n    vertical-align: middle;\n    flex-shrink: 0;\n  }\n  .key-cell { display: flex; align-items: center; }\n  .compat-badge {\n    display: inline-block;\n    padding: 1px 6px;\n    border-radius: 3px;\n    font-size: 10px;\n    font-weight: 500;\n    white-space: nowrap;\n  }\n  .badge-same    { background: #1f4d2a; color: #7ec87e; }\n  .badge-rel     { background: #1a3d4d; color: #7ec8e3; }\n  .badge-dom     { background: #4d3a1a; color: #e3b87e; }\n  .badge-sub     { background: #3a1a4d; color: #c87ee3; }\n  .badge-par     { background: #2a2a2a; color: #aaa; }\n  .track-name    { font-size: 11px; color: #777; }\n\n  /* Section dividers */\n  .section-header {\n    font-size: 10px;\n    color: #555;\n    text-transform: uppercase;\n    letter-spacing: 0.07em;\n    font-weight: 600;\n    padding: 10px 8px 4px;\n    border-top: 1px solid #2a2a2a;\n    margin-top: 4px;\n  }\n  .section-header:first-child { border-top: none; margin-top: 0; }\n\n  /* Progression suggestions */\n  .sugg-table tbody td { padding: 5px 8px; }\n  .template-cell {\n    font-size: 11px;\n    color: #777;\n    white-space: nowrap;\n    font-variant-numeric: tabular-nums;\n  }\n  .chords-cell {\n    font-size: 12px;\n    color: #bbb;\n    letter-spacing: 0.02em;\n  }\n\n  .empty {\n    color: #555;\n    text-align: center;\n    padding: 20px 16px 4px;\n    font-size: 12px;\n    line-height: 1.8;\n  }\n\n  footer {\n    padding: 8px 16px;\n    border-top: 1px solid #333;\n    display: flex;\n    justify-content: flex-end;\n    flex-shrink: 0;\n  }\n  button.close-btn {\n    padding: 5px 18px;\n    background: #3a3a3a;\n    border: 1px solid #555;\n    border-radius: 4px;\n    color: #ccc;\n    font-size: 13px;\n    cursor: pointer;\n  }\n  button.close-btn:hover { background: #4a4a4a; }\n  button.write-btn {\n    padding: 2px 8px;\n    background: #1f3a1f;\n    border: 1px solid #3a6b3a;\n    border-radius: 3px;\n    color: #7ec87e;\n    font-size: 11px;\n    cursor: pointer;\n    white-space: nowrap;\n  }\n  button.write-btn:hover { background: #2a4f2a; border-color: #5a9e5a; }\n</style>\n</head>\n<body>\n<header>\n  <h2 id="title">Compatible Clips</h2>\n  <p id="subtitle"></p>\n</header>\n<div class="list-wrap" id="listWrap"></div>\n<footer>\n  <button class="close-btn" id="closeBtn">Close</button>\n</footer>\n<script>\n  const data = __COMPATIBLE_JSON__;\n\n  document.getElementById("title").textContent =\n    `Compatible \u2014 ${data.refClipName}`;\n  document.getElementById("subtitle").textContent =\n    `Reference key: ${data.refKey}  \xB7  ${data.results.length} clip${data.results.length !== 1 ? "s" : ""}  \xB7  ${data.suggestions.length} progression${data.suggestions.length !== 1 ? "s" : ""}`;\n\n  function badgeClass(compat) {\n    if (compat === "Same key") return "badge-same";\n    if (compat.startsWith("Relative")) return "badge-rel";\n    if (compat.startsWith("Dominant") || compat.startsWith("Subdominant")) return "badge-dom";\n    if (compat.startsWith("Parallel")) return "badge-par";\n    return "badge-sub";\n  }\n\n  function colorToCSS(n) {\n    const r = (n >> 16) & 0xff;\n    const g = (n >> 8) & 0xff;\n    const b = n & 0xff;\n    return `rgb(${r},${g},${b})`;\n  }\n\n  const wrap = document.getElementById("listWrap");\n\n  // \u2500\u2500 Compatible clips \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n  const clipsHeader = document.createElement("div");\n  clipsHeader.className = "section-header section-header:first-child";\n  clipsHeader.style.borderTop = "none";\n  clipsHeader.textContent = "Compatible Clips";\n  wrap.appendChild(clipsHeader);\n\n  if (data.results.length === 0) {\n    const empty = document.createElement("div");\n    empty.className = "empty";\n    empty.textContent = "No harmonically compatible clips found in session.";\n    wrap.appendChild(empty);\n  } else {\n    const table = document.createElement("table");\n    table.innerHTML = `\n      <thead>\n        <tr>\n          <th>Clip</th>\n          <th>Track</th>\n          <th>Key</th>\n          <th>Relationship</th>\n        </tr>\n      </thead>\n      <tbody id="clipBody"></tbody>\n    `;\n    wrap.appendChild(table);\n    const tbody = document.getElementById("clipBody");\n    for (const clip of data.results) {\n      const tr = document.createElement("tr");\n      tr.innerHTML = `\n        <td>${clip.clipName}</td>\n        <td class="track-name">${clip.trackName}</td>\n        <td>\n          <div class="key-cell">\n            <span class="swatch" style="background:${colorToCSS(clip.color)}"></span>\n            ${clip.key}\n          </div>\n        </td>\n        <td>\n          <span class="compat-badge ${badgeClass(clip.compatibility)}">${clip.compatibility}</span>\n        </td>\n      `;\n      tbody.appendChild(tr);\n    }\n  }\n\n  // \u2500\u2500 Compatible progressions \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n  if (data.suggestions && data.suggestions.length > 0) {\n    const suggHeader = document.createElement("div");\n    suggHeader.className = "section-header";\n    suggHeader.textContent = "Compatible Progressions";\n    wrap.appendChild(suggHeader);\n\n    const suggTable = document.createElement("table");\n    suggTable.className = "sugg-table";\n    suggTable.innerHTML = `<tbody id="suggBody"></tbody>`;\n    wrap.appendChild(suggTable);\n\n    const suggBody = document.getElementById("suggBody");\n    data.suggestions.forEach((s, idx) => {\n      const tr = document.createElement("tr");\n      tr.innerHTML = `\n        <td><span class="compat-badge ${badgeClass(s.relationship)}">${s.relationship}</span></td>\n        <td>\n          <div class="key-cell">\n            <span class="swatch" style="background:${colorToCSS(s.color)}"></span>\n            ${s.keyLabel}\n          </div>\n        </td>\n        <td class="template-cell">${s.template}</td>\n        <td class="chords-cell">${s.chords.join(" \xB7 ")}</td>\n        <td><button class="write-btn" data-idx="${idx}">Write \u2192</button></td>\n      `;\n      suggBody.appendChild(tr);\n    });\n\n    suggBody.addEventListener("click", e => {\n      const btn = e.target.closest(".write-btn");\n      if (!btn) return;\n      const s = data.suggestions[+btn.dataset.idx];\n      closeWithResult({ action: "writeProgression", suggestion: s });\n    });\n  }\n\n  document.getElementById("closeBtn").addEventListener("click", () => closeWithResult(null));\n</script>\n</body>\n</html>\n';
 
-  .empty {
-    color: #555;
-    text-align: center;
-    padding: 20px 16px 4px;
-    font-size: 12px;
-    line-height: 1.8;
-  }
+// src/transposesession.html
+var transposesession_default = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<script>\n  const isWebKit = window.webkit?.messageHandlers?.live;\n  const isWebView2 = window.chrome?.webview;\n  function closeWithResult(result) {\n    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };\n    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);\n    else if (isWebView2) window.chrome.webview.postMessage(msg);\n  }\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n    font-size: 13px;\n    background: #1e1e1e;\n    color: #d4d4d4;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    height: 100vh;\n    gap: 14px;\n    padding: 16px;\n  }\n  h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }\n  .row { display: flex; align-items: center; gap: 10px; }\n  button.adj {\n    width: 28px; height: 28px;\n    background: #3a3a3a; border: 1px solid #555;\n    border-radius: 4px; color: #d4d4d4;\n    font-size: 18px; cursor: pointer; line-height: 1;\n  }\n  button.adj:hover { background: #4a4a4a; }\n  #display {\n    width: 56px; text-align: center;\n    font-size: 20px; font-weight: 700; color: #888;\n    background: #2a2a2a; border: 1px solid #555;\n    border-radius: 4px; padding: 4px 0;\n  }\n  .presets { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }\n  button.preset {\n    padding: 3px 10px; background: #2a2a2a; border: 1px solid #555;\n    border-radius: 4px; color: #bbb; font-size: 11px; cursor: pointer;\n  }\n  button.preset:hover { background: #3a3a3a; color: #fff; }\n  .recolor-row {\n    display: flex; align-items: center; gap: 8px;\n    font-size: 12px; color: #aaa; cursor: pointer;\n  }\n  .recolor-row input { accent-color: #0e639c; cursor: pointer; }\n  .actions { display: flex; gap: 8px; }\n  button.primary {\n    padding: 6px 22px; background: #0e639c; border: none;\n    border-radius: 4px; color: #fff; font-size: 13px;\n    cursor: pointer; font-weight: 600;\n  }\n  button.primary:hover { background: #1177bb; }\n  button.cancel {\n    padding: 6px 16px; background: #3a3a3a; border: 1px solid #555;\n    border-radius: 4px; color: #ccc; font-size: 13px; cursor: pointer;\n  }\n  button.cancel:hover { background: #4a4a4a; }\n</style>\n</head>\n<body>\n<h2>Transpose Session</h2>\n<div class="row">\n  <button class="adj" id="down">\u2212</button>\n  <div id="display">0</div>\n  <button class="adj" id="up">+</button>\n</div>\n<div class="presets">\n  <button class="preset" data-v="-12">\u221212</button>\n  <button class="preset" data-v="-7">\u22127</button>\n  <button class="preset" data-v="-5">\u22125</button>\n  <button class="preset" data-v="-2">\u22122</button>\n  <button class="preset" data-v="-1">\u22121</button>\n  <button class="preset" data-v="1">+1</button>\n  <button class="preset" data-v="2">+2</button>\n  <button class="preset" data-v="5">+5</button>\n  <button class="preset" data-v="7">+7</button>\n  <button class="preset" data-v="12">+12</button>\n</div>\n<label class="recolor-row">\n  <input type="checkbox" id="recolor" checked />\n  Re-color clips by key after transposing\n</label>\n<div class="actions">\n  <button class="cancel" id="cancelBtn">Cancel</button>\n  <button class="primary" id="transposeBtn">Transpose</button>\n</div>\n<script>\n  let semitones = 0;\n  const display = document.getElementById("display");\n  function update() {\n    display.textContent = semitones > 0 ? "+" + semitones : String(semitones);\n    display.style.color = semitones === 0 ? "#888" : semitones > 0 ? "#7ec8e3" : "#f28b82";\n  }\n  document.getElementById("up").addEventListener("click", () => { if (semitones < 24) { semitones++; update(); } });\n  document.getElementById("down").addEventListener("click", () => { if (semitones > -24) { semitones--; update(); } });\n  document.querySelectorAll(".preset").forEach(btn => {\n    btn.addEventListener("click", () => { semitones = parseInt(btn.dataset.v, 10); update(); });\n  });\n  document.getElementById("transposeBtn").addEventListener("click", () => {\n    const recolor = document.getElementById("recolor").checked;\n    if (semitones === 0 && !recolor) { closeWithResult(null); return; }\n    closeWithResult({ action: "transpose", semitones, recolor });\n  });\n  document.getElementById("cancelBtn").addEventListener("click", () => closeWithResult(null));\n</script>\n</body>\n</html>\n';
 
-  footer {
-    padding: 8px 16px;
-    border-top: 1px solid #333;
-    display: flex;
-    justify-content: flex-end;
-    flex-shrink: 0;
-  }
-  button.close-btn {
-    padding: 5px 18px;
-    background: #3a3a3a;
-    border: 1px solid #555;
-    border-radius: 4px;
-    color: #ccc;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  button.close-btn:hover { background: #4a4a4a; }
-  button.write-btn {
-    padding: 2px 8px;
-    background: #1f3a1f;
-    border: 1px solid #3a6b3a;
-    border-radius: 3px;
-    color: #7ec87e;
-    font-size: 11px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  button.write-btn:hover { background: #2a4f2a; border-color: #5a9e5a; }
-</style>
-</head>
-<body>
-<header>
-  <h2 id="title">Compatible Clips</h2>
-  <p id="subtitle"></p>
-</header>
-<div class="list-wrap" id="listWrap"></div>
-<footer>
-  <button class="close-btn" id="closeBtn">Close</button>
-</footer>
-<script>
-  const data = __COMPATIBLE_JSON__;
-
-  document.getElementById("title").textContent =
-    \`Compatible \u2014 \${data.refClipName}\`;
-  document.getElementById("subtitle").textContent =
-    \`Reference key: \${data.refKey}  \xB7  \${data.results.length} clip\${data.results.length !== 1 ? "s" : ""}  \xB7  \${data.suggestions.length} progression\${data.suggestions.length !== 1 ? "s" : ""}\`;
-
-  function badgeClass(compat) {
-    if (compat === "Same key") return "badge-same";
-    if (compat.startsWith("Relative")) return "badge-rel";
-    if (compat.startsWith("Dominant") || compat.startsWith("Subdominant")) return "badge-dom";
-    if (compat.startsWith("Parallel")) return "badge-par";
-    return "badge-sub";
-  }
-
-  function colorToCSS(n) {
-    const r = (n >> 16) & 0xff;
-    const g = (n >> 8) & 0xff;
-    const b = n & 0xff;
-    return \`rgb(\${r},\${g},\${b})\`;
-  }
-
-  const wrap = document.getElementById("listWrap");
-
-  // \u2500\u2500 Compatible clips \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-
-  const clipsHeader = document.createElement("div");
-  clipsHeader.className = "section-header section-header:first-child";
-  clipsHeader.style.borderTop = "none";
-  clipsHeader.textContent = "Compatible Clips";
-  wrap.appendChild(clipsHeader);
-
-  if (data.results.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "No harmonically compatible clips found in session.";
-    wrap.appendChild(empty);
-  } else {
-    const table = document.createElement("table");
-    table.innerHTML = \`
-      <thead>
-        <tr>
-          <th>Clip</th>
-          <th>Track</th>
-          <th>Key</th>
-          <th>Relationship</th>
-        </tr>
-      </thead>
-      <tbody id="clipBody"></tbody>
-    \`;
-    wrap.appendChild(table);
-    const tbody = document.getElementById("clipBody");
-    for (const clip of data.results) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = \`
-        <td>\${clip.clipName}</td>
-        <td class="track-name">\${clip.trackName}</td>
-        <td>
-          <div class="key-cell">
-            <span class="swatch" style="background:\${colorToCSS(clip.color)}"></span>
-            \${clip.key}
-          </div>
-        </td>
-        <td>
-          <span class="compat-badge \${badgeClass(clip.compatibility)}">\${clip.compatibility}</span>
-        </td>
-      \`;
-      tbody.appendChild(tr);
-    }
-  }
-
-  // \u2500\u2500 Compatible progressions \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-
-  if (data.suggestions && data.suggestions.length > 0) {
-    const suggHeader = document.createElement("div");
-    suggHeader.className = "section-header";
-    suggHeader.textContent = "Compatible Progressions";
-    wrap.appendChild(suggHeader);
-
-    const suggTable = document.createElement("table");
-    suggTable.className = "sugg-table";
-    suggTable.innerHTML = \`<tbody id="suggBody"></tbody>\`;
-    wrap.appendChild(suggTable);
-
-    const suggBody = document.getElementById("suggBody");
-    data.suggestions.forEach((s, idx) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = \`
-        <td><span class="compat-badge \${badgeClass(s.relationship)}">\${s.relationship}</span></td>
-        <td>
-          <div class="key-cell">
-            <span class="swatch" style="background:\${colorToCSS(s.color)}"></span>
-            \${s.keyLabel}
-          </div>
-        </td>
-        <td class="template-cell">\${s.template}</td>
-        <td class="chords-cell">\${s.chords.join(" \xB7 ")}</td>
-        <td><button class="write-btn" data-idx="\${idx}">Write \u2192</button></td>
-      \`;
-      suggBody.appendChild(tr);
-    });
-
-    suggBody.addEventListener("click", e => {
-      const btn = e.target.closest(".write-btn");
-      if (!btn) return;
-      const s = data.suggestions[+btn.dataset.idx];
-      closeWithResult({ action: "writeProgression", suggestion: s });
-    });
-  }
-
-  document.getElementById("closeBtn").addEventListener("click", () => closeWithResult(null));
-</script>
-</body>
-</html>
-`;var Te=`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<script>
-  const isWebKit = window.webkit?.messageHandlers?.live;
-  const isWebView2 = window.chrome?.webview;
-  function closeWithResult(result) {
-    const msg = { method: "close_and_send", params: [JSON.stringify(result)] };
-    if (isWebKit) window.webkit.messageHandlers.live.postMessage(msg);
-    else if (isWebView2) window.chrome.webview.postMessage(msg);
-  }
-</script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 13px;
-    background: #1e1e1e;
-    color: #d4d4d4;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    gap: 14px;
-    padding: 16px;
-  }
-  h2 { font-size: 14px; font-weight: 600; color: #e0e0e0; }
-  .row { display: flex; align-items: center; gap: 10px; }
-  button.adj {
-    width: 28px; height: 28px;
-    background: #3a3a3a; border: 1px solid #555;
-    border-radius: 4px; color: #d4d4d4;
-    font-size: 18px; cursor: pointer; line-height: 1;
-  }
-  button.adj:hover { background: #4a4a4a; }
-  #display {
-    width: 56px; text-align: center;
-    font-size: 20px; font-weight: 700; color: #888;
-    background: #2a2a2a; border: 1px solid #555;
-    border-radius: 4px; padding: 4px 0;
-  }
-  .presets { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-  button.preset {
-    padding: 3px 10px; background: #2a2a2a; border: 1px solid #555;
-    border-radius: 4px; color: #bbb; font-size: 11px; cursor: pointer;
-  }
-  button.preset:hover { background: #3a3a3a; color: #fff; }
-  .recolor-row {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: #aaa; cursor: pointer;
-  }
-  .recolor-row input { accent-color: #0e639c; cursor: pointer; }
-  .actions { display: flex; gap: 8px; }
-  button.primary {
-    padding: 6px 22px; background: #0e639c; border: none;
-    border-radius: 4px; color: #fff; font-size: 13px;
-    cursor: pointer; font-weight: 600;
-  }
-  button.primary:hover { background: #1177bb; }
-  button.cancel {
-    padding: 6px 16px; background: #3a3a3a; border: 1px solid #555;
-    border-radius: 4px; color: #ccc; font-size: 13px; cursor: pointer;
-  }
-  button.cancel:hover { background: #4a4a4a; }
-</style>
-</head>
-<body>
-<h2>Transpose Session</h2>
-<div class="row">
-  <button class="adj" id="down">\u2212</button>
-  <div id="display">0</div>
-  <button class="adj" id="up">+</button>
-</div>
-<div class="presets">
-  <button class="preset" data-v="-12">\u221212</button>
-  <button class="preset" data-v="-7">\u22127</button>
-  <button class="preset" data-v="-5">\u22125</button>
-  <button class="preset" data-v="-2">\u22122</button>
-  <button class="preset" data-v="-1">\u22121</button>
-  <button class="preset" data-v="1">+1</button>
-  <button class="preset" data-v="2">+2</button>
-  <button class="preset" data-v="5">+5</button>
-  <button class="preset" data-v="7">+7</button>
-  <button class="preset" data-v="12">+12</button>
-</div>
-<label class="recolor-row">
-  <input type="checkbox" id="recolor" checked />
-  Re-color clips by key after transposing
-</label>
-<div class="actions">
-  <button class="cancel" id="cancelBtn">Cancel</button>
-  <button class="primary" id="transposeBtn">Transpose</button>
-</div>
-<script>
-  let semitones = 0;
-  const display = document.getElementById("display");
-  function update() {
-    display.textContent = semitones > 0 ? "+" + semitones : String(semitones);
-    display.style.color = semitones === 0 ? "#888" : semitones > 0 ? "#7ec8e3" : "#f28b82";
-  }
-  document.getElementById("up").addEventListener("click", () => { if (semitones < 24) { semitones++; update(); } });
-  document.getElementById("down").addEventListener("click", () => { if (semitones > -24) { semitones--; update(); } });
-  document.querySelectorAll(".preset").forEach(btn => {
-    btn.addEventListener("click", () => { semitones = parseInt(btn.dataset.v, 10); update(); });
-  });
-  document.getElementById("transposeBtn").addEventListener("click", () => {
-    const recolor = document.getElementById("recolor").checked;
-    if (semitones === 0 && !recolor) { closeWithResult(null); return; }
-    closeWithResult({ action: "transpose", semitones, recolor });
-  });
-  document.getElementById("cancelBtn").addEventListener("click", () => closeWithResult(null));
-</script>
-</body>
-</html>
-`;var Ae=`<!DOCTYPE html>
+// src/theory-machine.html
+var theory_machine_default = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -3426,4 +4034,1325 @@ initMidi();
 </script>
 </body>
 </html>
-`;var J=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],Ne={Major:"major",Minor:"natural_minor",Dorian:"dorian",Phrygian:"phrygian",Lydian:"lydian",Mixolydian:"mixolydian",Locrian:"locrian","Harmonic Minor":"harmonic_minor","Melodic Minor":"melodic_minor"},nt={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11},at=[0,7,2,9,4,11,6,1,8,3,10,5],U=[0,2,4,5,7,9,11],st=[0,2,3,5,7,8,10],it=[0,2,3,5,7,9,10],rt=[0,1,3,5,7,8,10],lt=[0,2,4,6,7,9,11],ct=[0,2,4,5,7,9,10],dt=[0,1,3,5,6,8,10],mt=[0,2,3,5,7,8,11],pt=[0,2,3,5,7,9,11],ht=[0,2,4,7,9],ut=[0,3,5,7,10],gt=[0,3,5,6,7,10],Y={major:U,natural_minor:st,dorian:it,phrygian:rt,lydian:lt,mixolydian:ct,locrian:dt,harmonic_minor:mt,melodic_minor:pt,pentatonic_major:ht,pentatonic_minor:ut,blues:gt},bt={major:"major",natural_minor:"minor",dorian:"Dorian",phrygian:"Phrygian",lydian:"Lydian",mixolydian:"Mixolydian",locrian:"Locrian",harmonic_minor:"harmonic minor",melodic_minor:"melodic minor",pentatonic_major:"pentatonic major",pentatonic_minor:"pentatonic minor",blues:"blues"},_e=[{id:"major",label:"Major"},{id:"natural_minor",label:"Natural Minor"},{id:"dorian",label:"Dorian"},{id:"phrygian",label:"Phrygian"},{id:"lydian",label:"Lydian"},{id:"mixolydian",label:"Mixolydian"},{id:"locrian",label:"Locrian"},{id:"harmonic_minor",label:"Harmonic Minor"},{id:"melodic_minor",label:"Melodic Minor"},{id:"pentatonic_major",label:"Pentatonic Major"},{id:"pentatonic_minor",label:"Pentatonic Minor"},{id:"blues",label:"Blues"}];function W(e,t=.25){let a=new Map;for(let c of e){let r=Math.round(c.startTime/t)*t,m=Math.round(r*1e3),s=a.get(m);s?s.push(c.pitch):a.set(m,[c.pitch])}return a}function oe(e){return JSON.stringify(e).replace(/</g,"\\u003C").replace(/>/g,"\\u003E")}function ft(e,t,a){let c=t/100,r=a/100,m=c*Math.min(r,1-r),s=l=>{let n=(l+e/30)%12;return r-m*Math.max(Math.min(n-3,9-n,1),-1)};return Math.round(s(0)*255)<<16|Math.round(s(8)*255)<<8|Math.round(s(4)*255)}function ne(e){let t=e.match(/^([A-G][#b]?)\s+(.*)/);if(!t)return null;let a=nt[t[1]??""];if(a===void 0)return null;let c=/minor|min\b/i.test(t[2]??""),r=(at[a]??0)*30;return ft(r,c?55:70,c?35:45)}async function G(e,t){let a=W(e),r=(await Promise.all([...a.entries()].map(([n,o])=>t.send("recognize_chord",{notes:o}).then(v=>({beatKey:n,r:v}))))).sort((n,o)=>n.beatKey-o.beatKey).flatMap(({r:n})=>{let o=n.matches[0];return o&&o.score>=.5?[o.chord.name]:[]}).filter((n,o,v)=>o===0||n!==v[o-1]);if(r.length>0){let o=(await t.send("analyze",{chord_names:r})).inferred_key;return{root:o.root,scale:o.scale,label:o.label}}let m=new Array(12).fill(0);for(let n of e){let o=n.pitch%12;m[o]=(m[o]??0)+1}let s=-1,l=null;for(let n=0;n<12;n++)for(let[o,v]of Object.entries(Y)){let d=0;for(let i of v)d+=m[(n+i)%12]??0;if(d>s){s=d;let i=J[n]??"C",p=bt[o]??o;l={root:n,scale:o,label:`${i} ${p}`}}}return l}function ce(e,t){let a=e%12;if(t.has(a))return e;for(let c=1;c<=6;c++){let r=t.has((a+c)%12),m=t.has((a-c+12)%12);if(r&&m||r)return e+c;if(m)return e-c}return e}function ae(e){let t=e.match(/^([A-G][#b]?)\s+(.+)$/);if(!t)return e;let a=t[1]??e,c=(t[2]??"").toLowerCase().trim();if(c==="major")return a;if(c==="minor"||c==="natural minor"||c==="natural_minor")return`${a}m`;if(c==="harmonic minor"||c==="harmonic_minor")return`${a}hm`;if(c==="melodic minor"||c==="melodic_minor")return`${a}mm`;let r=c.split(/[\s_]/)[0]??c;return`${a} ${r.slice(0,3)}`}function yt(e,t,a,c){return e===a&&t===c?"Same key":e===a?t?"Parallel major":"Parallel minor":!t&&c&&a===(e+9)%12?"Relative minor":t&&!c&&a===(e+3)%12?"Relative major":a===(e+7)%12?"Dominant (V)":a===(e+5)%12?"Subdominant (IV)":null}function vt(e){let t=we(e,"1.0.0"),a=process.env.COMPOSITION_AIDE_PATH??De.join(__dirname,"..","engine"),c=process.env.PYTHON_CMD??(process.platform==="win32"?"python":"python3"),r=new te(a,c);r.send("list_ops").catch(()=>{}),t.commands.registerCommand("aide.generate",m=>{(async s=>{let l=s.selected_lanes.map(y=>t.getObjectFromHandle(y,j)).filter(y=>y instanceof K);if(!l.length){console.log("[composition-aide] No MIDI tracks in selection.");return}let n=await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(le)}`,380,322),o;try{o=JSON.parse(n)}catch{return}if(!o)return;let v=s.time_selection_end-s.time_selection_start,{chords:d}=await r.send("progression",{key:o.key,scale:o.scale,template:o.template,sevenths:o.sevenths}),{voicings:i}=await r.send("voice_progression",{chords:d,strategy:o.voicing,octave:4}),p=v/d.length,u=`${o.template} \u2014 ${o.keyName} ${o.scale.replace(/_/g," ")}`,b=i.flatMap((y,f)=>y.map(g=>({pitch:Math.max(0,Math.min(127,g)),startTime:f*p,duration:p*.95,velocity:90})));if(o.snapToScale){let y=Y[o.scale]??U,f=new Set(y.map(g=>(o.key+g)%12));b=b.map(g=>({...g,pitch:ce(g.pitch,f)}))}await Promise.all(l.map(async y=>{let f=await y.createMidiClip(s.time_selection_start,v);f.name=u,f.notes=b})),console.log(`[composition-aide] "${u}": ${d.map(y=>y.name).join(" \u2013 ")} (${p.toFixed(2)} beats/chord)`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("MidiTrack.ArrangementSelection","Generate Progression\u2026","aide.generate"),t.commands.registerCommand("aide.analyze",m=>{let s=async l=>{let n=t.getObjectFromHandle(l,D),o=n.notes;if(o.length===0){console.log("[composition-aide] Clip has no notes.");return}let v=W(o),i=(await Promise.all([...v.entries()].map(([k,_])=>r.send("recognize_chord",{notes:_}).then(B=>({beatKey:k,result:B}))))).sort((k,_)=>k.beatKey-_.beatKey).flatMap(({beatKey:k,result:_})=>{let B=_.matches[0];return!B||B.score<.5?[]:[{beat:k/1e3,name:B.chord.name,score:B.score,pitchClasses:B.chord.pitch_classes,root:B.chord.root,quality:B.chord.quality}]}).filter((k,_,B)=>_===0||k.name!==B[_-1]?.name);if(i.length===0){console.log("[composition-aide] Could not identify any chords in this clip.");return}let p=i.map(k=>k.name),u=await r.send("analyze",{chord_names:p}),b={clipName:n.name||"(unnamed clip)",noteCount:o.length,inferredKey:u.inferred_key.label,scaleRoot:u.inferred_key.root,scaleIntervals:[...Y[u.inferred_key.scale]??U],chords:p.map((k,_)=>({beat:i[_]?.beat??0,name:k,roman:u.roman_labels[_]??k,tension:u.tension[_]??0,score:i[_]?.score??0,pitchClasses:i[_]?.pitchClasses??[],root:i[_]?.root??0,quality:i[_]?.quality??"major"})),substitutions:u.substitutions.slice(0,5).map(k=>({position:k.position,original:k.original.name,replacement:k.replacement.name,rationale:k.rationale})),summary:u.summary},y=await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(Ce.replace("__ANALYSIS_JSON__",oe(b)))}`,520,560);console.log(`[composition-aide] Analyzed "${b.clipName}": ${b.inferredKey} \u2014 ${p.join(" \u2013 ")}`);let f;try{f=JSON.parse(y)}catch{return}if(!f||f.action!=="substitute")return;let{position:g,original:w,replacement:S}=f,A=i[g];if(!A){console.error(`[composition-aide] Substitution position ${g} out of range.`);return}let M=i[g+1],I=A.beat,E=n.notes,h=Math.max(I+4,...E.map(k=>k.startTime+k.duration)),x=M?.beat??h,C=E.filter(k=>k.startTime>=I-.01&&k.startTime<x-.01),T=C.length>0?Math.round(C.reduce((k,_)=>k+_.pitch,0)/C.length):60,P=Math.max(3,Math.min(6,Math.floor(T/12)-1)),O=await r.send("voicings",{name:S,octave:P}),N=C.length>0?C.reduce((k,_)=>k+_.duration,0)/C.length:(x-I)*.95,$=O.close.map(k=>({pitch:Math.max(0,Math.min(127,k)),startTime:I,duration:N,velocity:90}));n.notes=[...E.filter(k=>k.startTime<I-.01||k.startTime>=x-.01),...$],console.log(`[composition-aide] Substituted: ${w} \u2192 ${S} at beat ${I.toFixed(2)} (octave ${P})`),await s(l)};s(m).catch(l=>console.error(l))}),t.ui.registerContextMenuAction("MidiClip","Analyze Harmony\u2026","aide.analyze"),t.commands.registerCommand("aide.chordPalette",m=>{(async s=>{let l=t.getObjectFromHandle(s,q),n=t.application.song,o=n?.rootNote??0,v=n?.scaleName??"Major",d=Ne[v]??"major",i=await Promise.all(_e.flatMap(({id:x})=>[r.send("diatonic",{key:o,scale:x,sevenths:!1}).then(C=>({id:x,sevenths:!1,chords:C.chords})),r.send("diatonic",{key:o,scale:x,sevenths:!0}).then(C=>({id:x,sevenths:!0,chords:C.chords}))])),p={};for(let{id:x,sevenths:C,chords:T}of i)p[x]||(p[x]={triads:[],sevenths:[],intervals:Y[x]??U}),C?p[x].sevenths=T:p[x].triads=T;let u={keyRoot:o,keyName:J[o]??"C",defaultScale:d,scaleOptions:_e,scales:p},b=await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(ke.replace("__PALETTE_JSON__",oe(u)))}`,510,296),y;try{y=JSON.parse(b)}catch{return}if(!y||y.action!=="insert")return;let{chordName:f,length:g,voicing:w,octave:S,selectedScale:A}=y,E=(await r.send("voicings",{name:f,octave:S}))[w].map(x=>({pitch:Math.max(0,Math.min(127,x)),startTime:0,duration:g*.95,velocity:90})),h=l.clip;if(h instanceof D)h.name=f,h.notes=E;else{let x=await l.createMidiClip(g);x.name=f,x.notes=E}console.log(`[composition-aide] Inserted ${f} (${w}, oct ${S}, ${g} beats) \u2014 ${u.keyName} ${A}`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("ClipSlot","Insert Chord\u2026","aide.chordPalette"),t.commands.registerCommand("aide.sessionMap",m=>{(async s=>{let l=t.application.song;if(!l)return;let n=l.tracks,v=l.scenes.map(M=>M.name),d=[];for(let M=0;M<n.length;M++){let I=n[M];if(!I)continue;let E=I.clipSlots;for(let h=0;h<E.length;h++){let x=E[h];if(!x)continue;let C=x.clip;if(!(C instanceof D))continue;let T=C.notes;T.length!==0&&d.push({trackIndex:M,trackName:I.name,sceneIndex:h,notes:T,clipName:C.name||"(unnamed)"})}}let i=d.length;if(i===0){console.log("[composition-aide] No MIDI clips with notes found in session.");return}let u=d.reduce((M,I)=>Math.max(M,I.sceneIndex),0)+1,b=[];await t.ui.withinProgressDialog(`Analyzing session \u2014 ${i} clips\u2026`,{progress:0},async(M,I)=>{let E=0;await Promise.all(d.map(async h=>{if(I.aborted)return;let x=null,C=0;try{let T=W(h.notes),O=(await Promise.all([...T.entries()].map(([N,$])=>r.send("recognize_chord",{notes:$}).then(k=>({beatKey:N,r:k}))))).sort((N,$)=>N.beatKey-$.beatKey).flatMap(({beatKey:N,r:$})=>{let k=$.matches[0];return!k||k.score<.5?[]:[{beat:N/1e3,name:k.chord.name}]}).filter((N,$,k)=>$===0||N.name!==k[$-1]?.name);if(O.length>0){let N=await r.send("analyze",{chord_names:O.map($=>$.name)});x=N.inferred_key.label,C=N.inferred_key.score}}catch(T){console.error(`[composition-aide] Could not analyze ${h.clipName}:`,T)}b.push({...h,key:x,score:C}),E++,await M(`${E} / ${i} clips\u2026`,Math.round(E/i*100))}))});let y=new Map;for(let M of b)M.key&&y.set(M.key,(y.get(M.key)??0)+1);let f=null,g=0;for(let[M,I]of y)I>g&&(g=I,f=M);let S=[...new Set(b.map(M=>M.trackIndex))].sort((M,I)=>M-I).map(M=>{let I=b.find(h=>h.trackIndex===M)?.trackName??`Track ${M+1}`,E=Array(u).fill(null);for(let h of b.filter(x=>x.trackIndex===M))E[h.sceneIndex]={clipName:h.clipName,key:h.key,score:h.score};return{name:I,clips:E}}),A={dominantKey:f,sceneCount:u,sceneNames:v.slice(0,u),totalMidiClips:i,analyzedClips:b.filter(M=>M.key!==null).length,tracks:S};await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(Ie.replace("__SESSION_JSON__",oe(A)))}`,680,480),console.log(`[composition-aide] Session map: ${A.analyzedClips}/${i} clips`+(f?` \u2014 dominant key: ${f}`:""))})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("Scene","Map Session Keys\u2026","aide.sessionMap"),t.commands.registerCommand("aide.colorByKey",m=>{(async s=>{let l=t.application.song;if(!l)return;let n=[];for(let v of l.tracks)for(let d of v.clipSlots){let i=d.clip;if(!(i instanceof D))continue;let p=i.notes;p.length!==0&&n.push({clip:i,notes:p,clipName:i.name||"(unnamed)"})}if(n.length===0){console.log("[composition-aide] No MIDI clips with notes found.");return}let o=0;await t.ui.withinProgressDialog(`Coloring ${n.length} clips by key\u2026`,{progress:0},async(v,d)=>{let i=0;await Promise.all(n.map(async p=>{if(!d.aborted){try{let u=W(p.notes),y=(await Promise.all([...u.entries()].map(([f,g])=>r.send("recognize_chord",{notes:g}).then(w=>({beatKey:f,r:w}))))).sort((f,g)=>f.beatKey-g.beatKey).flatMap(({r:f})=>{let g=f.matches[0];return g&&g.score>=.5?[g.chord.name]:[]}).filter((f,g,w)=>g===0||f!==w[g-1]);if(y.length>0){let f=await r.send("analyze",{chord_names:y}),g=ne(f.inferred_key.label);g!==null&&(p.clip.color=g,o++)}}catch(u){console.error(`[composition-aide] Could not color "${p.clipName}":`,u)}i++,await v(`${i} / ${n.length} clips\u2026`,Math.round(i/n.length*100))}}))}),console.log(`[composition-aide] Colored ${o} / ${n.length} clips by key.`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("Scene","Color Clips by Key","aide.colorByKey"),t.commands.registerCommand("aide.generateInClip",m=>{(async s=>{let l=t.getObjectFromHandle(s,D),n=l.looping?l.loopEnd-l.loopStart:l.duration,o=n>0?n:8,v=await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(le)}`,380,322),d;try{d=JSON.parse(v)}catch{return}if(!d)return;let{chords:i}=await r.send("progression",{key:d.key,scale:d.scale,template:d.template,sevenths:d.sevenths}),{voicings:p}=await r.send("voice_progression",{chords:i,strategy:d.voicing,octave:4}),u=o/i.length,b=p.flatMap((y,f)=>y.map(g=>({pitch:Math.max(0,Math.min(127,g)),startTime:f*u,duration:u*.95,velocity:90})));if(d.snapToScale){let y=Y[d.scale]??U,f=new Set(y.map(g=>(d.key+g)%12));b=b.map(g=>({...g,pitch:ce(g.pitch,f)}))}l.notes=b,l.name=`${d.template} \u2014 ${d.keyName} ${d.scale.replace(/_/g," ")}`,console.log(`[composition-aide] Generated "${l.name}": ${i.map(y=>y.name).join(" \u2013 ")} (${u.toFixed(2)} beats/chord)`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("MidiClip","Fill Clip with Progression\u2026","aide.generateInClip"),t.commands.registerCommand("aide.voiceLead",m=>{(async s=>{let l=t.getObjectFromHandle(s,D),n=l.notes;if(n.length===0){console.log("[composition-aide] Clip has no notes.");return}let o=W(n),d=(await Promise.all([...o.entries()].map(([w,S])=>r.send("recognize_chord",{notes:S}).then(A=>({beatKey:w,r:A}))))).sort((w,S)=>w.beatKey-S.beatKey).flatMap(({beatKey:w,r:S})=>{let A=S.matches[0];return!A||A.score<.5?[]:[{beat:w/1e3,name:A.chord.name}]}).filter((w,S,A)=>S===0||w.name!==A[S-1]?.name);if(d.length===0){console.log("[composition-aide] No chords identified in clip.");return}let i=Math.round(n.reduce((w,S)=>w+S.pitch,0)/n.length),p=Math.max(3,Math.min(6,Math.floor(i/12)-1)),{voicings:u}=await r.send("voice_progression",{chords:d.map(w=>w.name),strategy:"smooth",octave:p}),b=new Map;for(let w of n){let S=Math.round(w.startTime/.25)*.25,A=Math.round(S*1e3),M=b.get(A)??[];M.push(w),b.set(A,M)}let y=new Set(d.map(w=>Math.round(w.beat*1e3))),f=[];for(let w=0;w<d.length;w++){let S=d[w],A=u[w]??[];if(!S||A.length===0)continue;let M=Math.round(S.beat*1e3),I=b.get(M)??[],E=I.length>0?I.reduce((x,C)=>x+C.duration,0)/I.length:2,h=I.length>0?Math.round(I.reduce((x,C)=>x+(C.velocity??90),0)/I.length):90;for(let x of A)f.push({pitch:Math.max(0,Math.min(127,x)),startTime:S.beat,duration:E,velocity:h})}let g=n.filter(w=>{let S=Math.round(Math.round(w.startTime/.25)*.25*1e3);return!y.has(S)});l.notes=[...g,...f],console.log(`[composition-aide] Voice-led "${l.name||"(unnamed)"}": ${d.length} chords, octave ${p}`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("MidiClip","Optimize Voice Leading","aide.voiceLead"),t.commands.registerCommand("aide.snapToKey",m=>{(async s=>{let l=t.getObjectFromHandle(s,D),n=l.notes;if(n.length===0){console.log("[composition-aide] Clip has no notes.");return}let o=await G(n,r);if(!o){console.log("[composition-aide] Could not determine key for this clip.");return}let v=await r.send("scale_info",{key:o.root,scale:o.scale}),d=new Set(v.notes),i=n.filter(u=>d.has(u.pitch%12)),p=n.length-i.length;l.notes=i,console.log(`[composition-aide] Snapped "${l.name||"(unnamed)"}" to ${o.label}: removed ${p} out-of-key notes, kept ${i.length}`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("MidiClip","Snap to Key","aide.snapToKey"),t.commands.registerCommand("aide.batchTranspose",m=>{(async s=>{let l=await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(Se)}`,300,200),n;try{n=JSON.parse(l)}catch{return}if(!n||n.action!=="transpose")return;let{semitones:o}=n;if(o===0)return;let v=0;for(let d of s.selected_clip_slots){let p=t.getObjectFromHandle(d,q).clip;if(!(p instanceof D))continue;let u=p.notes;u.length!==0&&(p.notes=u.map(b=>({pitch:Math.max(0,Math.min(127,b.pitch+o)),startTime:b.startTime,duration:b.duration,velocity:b.velocity??90})),v++)}console.log(`[composition-aide] Transposed ${v} clips ${o>0?"+":""}${o} semitones`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("ClipSlotSelection","Transpose Selected Clips\u2026","aide.batchTranspose"),t.commands.registerCommand("aide.findCompatible",m=>{(async s=>{let l=t.getObjectFromHandle(s,D),n=l.notes;if(n.length===0){console.log("[composition-aide] Clip has no notes.");return}let o=await G(n,r);if(!o){console.log("[composition-aide] Could not determine key for reference clip.");return}let v=t.application.song;if(!v)return;let d=/minor|min\b/i.test(o.scale),i=[];for(let h of v.tracks)for(let x of h.clipSlots){let C=x.clip;if(!(C instanceof D))continue;let T=C.notes;T.length!==0&&i.push({trackName:h.name,clip:C,notes:T})}let p=[];await t.ui.withinProgressDialog("Scanning session for compatible clips\u2026",{progress:0},async(h,x)=>{let C=0;await Promise.all(i.map(async T=>{if(!x.aborted){try{let P=await G(T.notes,r);if(P){let O=/minor|min\b/i.test(P.scale),N=yt(o.root,d,P.root,O);N&&p.push({trackName:T.trackName,clipName:T.clip.name||"(unnamed)",key:P.label,compatibility:N,color:ne(P.label)??4473924})}}catch(P){console.error(`[composition-aide] Error scanning "${T.clip.name}":`,P)}C++,await h(`${C} / ${i.length} clips\u2026`,Math.round(C/i.length*100))}}))});let u=["Same key","Relative minor","Relative major","Parallel major","Parallel minor","Dominant (V)","Subdominant (IV)"];p.sort((h,x)=>{let C=u.indexOf(h.compatibility),T=u.indexOf(x.compatibility);return(C===-1?99:C)-(T===-1?99:T)});let b=[{root:o.root,scale:o.scale,label:o.label,relationship:"Same key"}],y=d?(o.root+3)%12:(o.root+9)%12;b.push({root:y,scale:d?"major":"natural_minor",label:`${J[y]??"C"} ${d?"major":"minor"}`,relationship:d?"Relative major":"Relative minor"});let f=(o.root+7)%12;b.push({root:f,scale:o.scale,label:`${J[f]??"C"} ${d?"minor":"major"}`,relationship:"Dominant (V)"});let g=(o.root+5)%12;b.push({root:g,scale:o.scale,label:`${J[g]??"C"} ${d?"minor":"major"}`,relationship:"Subdominant (IV)"});let w=["I-V-vi-IV","I-IV-V-I","ii-V-I"],S=[];await Promise.all(b.flatMap((h,x)=>(x===0?w:w.slice(0,2)).map(async T=>{try{let P=await r.send("progression",{key:h.root,scale:h.scale,template:T,sevenths:!1});S.push({relationship:h.relationship,keyLabel:h.label,template:T,chords:P.chords.map(O=>O.name),color:ne(h.label)??4473924})}catch{}})));let A=["Same key","Relative minor","Relative major","Dominant (V)","Subdominant (IV)"];S.sort((h,x)=>{let C=A.indexOf(h.relationship),T=A.indexOf(x.relationship);return(C===-1?99:C)-(T===-1?99:T)});let M={refClipName:l.name||"(unnamed)",refKey:o.label,results:p,suggestions:S},I=await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(Ee.replace("__COMPATIBLE_JSON__",oe(M)))}`,620,560),E=null;try{let h=JSON.parse(I);h&&typeof h.action=="string"&&(E=h)}catch{}if(E?.action==="writeProgression"){let h=E.suggestion,x=null;e:for(let C of v.tracks)if(C instanceof K){for(let T of C.clipSlots)if(T.clip===null){x=T;break e}}if(!x)console.log("[composition-aide] No empty MIDI slot found \u2014 add an empty slot to a MIDI track.");else{let T=h.chords.length*2,P=[];for(let N=0;N<h.chords.length;N++)try{let $=await r.send("voicings",{name:h.chords[N],octave:4});for(let k of $.close??[])P.push({pitch:Math.max(0,Math.min(127,k)),startTime:N*2,duration:2*.95,velocity:90})}catch{console.warn(`[composition-aide] Could not voice chord "${h.chords[N]}"`)}let O=await x.createMidiClip(T);O.notes=P,O.name=`${h.keyLabel} \xB7 ${h.template}`,O.color=h.color,console.log(`[composition-aide] Wrote "${O.name}" (${h.chords.join(" \u2013 ")}) to empty slot`)}}console.log(`[composition-aide] Found ${p.length} compatible clips for "${M.refClipName}" (${o.label})`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("MidiClip","Find Compatible Clips\u2026","aide.findCompatible"),t.commands.registerCommand("aide.snapToScale",m=>{(async s=>{let l=t.getObjectFromHandle(s,D),n=l.notes;if(n.length===0){console.log("[composition-aide] Clip has no notes.");return}let o=await G(n,r);if(!o){console.log("[composition-aide] Could not determine key for this clip.");return}let v=await r.send("scale_info",{key:o.root,scale:o.scale}),d=new Set(v.notes),i=0,p=n.map(u=>{let b=ce(u.pitch,d);return b!==u.pitch&&i++,{...u,pitch:b}});l.notes=p,console.log(`[composition-aide] Snapped "${l.name||"(unnamed)"}" to ${o.label}: ${i} notes adjusted, ${n.length-i} already in scale`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("MidiClip","Snap Notes to Scale","aide.snapToScale"),t.commands.registerCommand("aide.labelClipKey",m=>{(async s=>{let l=t.getObjectFromHandle(s,D),n=l.notes;if(n.length===0){console.log("[composition-aide] Clip has no notes.");return}let o=await G(n,r);if(!o){console.log("[composition-aide] Could not determine key for this clip.");return}let v=(l.name||"").replace(/ \[[^\]]*\]$/,"").trim(),d=v.length>0?`${v} [${ae(o.label)}]`:`[${ae(o.label)}]`;l.name=d,console.log(`[composition-aide] Labeled clip: "${d}" (${o.label})`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("MidiClip","Label with Key","aide.labelClipKey"),t.commands.registerCommand("aide.labelAllKeys",m=>{(async s=>{let l=t.application.song;if(!l)return;let n=[];for(let v of l.tracks)for(let d of v.clipSlots){let i=d.clip;if(!(i instanceof D))continue;let p=i.notes;p.length!==0&&n.push({clip:i,notes:p})}if(n.length===0){console.log("[composition-aide] No MIDI clips with notes found.");return}let o=0;await t.ui.withinProgressDialog(`Labeling ${n.length} clips\u2026`,{progress:0},async(v,d)=>{let i=0;await Promise.all(n.map(async p=>{if(!d.aborted){try{let u=await G(p.notes,r);if(u){let b=(p.clip.name||"").replace(/ \[[^\]]*\]$/,"").trim();p.clip.name=b.length>0?`${b} [${ae(u.label)}]`:`[${ae(u.label)}]`,o++}}catch(u){console.error(`[composition-aide] Could not label "${p.clip.name}":`,u)}i++,await v(`${i} / ${n.length} clips\u2026`,Math.round(i/n.length*100))}}))}),console.log(`[composition-aide] Labeled ${o} / ${n.length} clips with key.`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("Scene","Label All Clips with Key","aide.labelAllKeys"),t.commands.registerCommand("aide.transposeSession",m=>{(async s=>{let l=await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(Te)}`,300,250),n;try{n=JSON.parse(l)}catch{return}if(!n||n.action!=="transpose")return;let{semitones:o,recolor:v}=n,d=t.application.song;if(!d)return;let i=[];for(let u of d.tracks)for(let b of u.clipSlots){let y=b.clip;y instanceof D&&i.push({clip:y,clipName:y.name||"(unnamed)"})}if(i.length===0){console.log("[composition-aide] No MIDI clips found in session.");return}let p=v?`Transposing + recoloring ${i.length} clips\u2026`:`Transposing ${i.length} clips\u2026`;await t.ui.withinProgressDialog(p,{progress:0},async(u,b)=>{if(o!==0){let y=0;for(let f of i){if(b.aborted)return;let g=f.clip.notes;g.length>0&&(f.clip.notes=g.map(w=>({...w,pitch:Math.max(0,Math.min(127,w.pitch+o))}))),y++,await u(`Transposing: ${y} / ${i.length}\u2026`,Math.round(v?y/i.length*50:y/i.length*100))}}if(v&&!b.aborted){let y=0,f=0;await Promise.all(i.map(async g=>{if(!b.aborted){try{let w=g.clip.notes;if(w.length===0)return;let S=W(w),M=(await Promise.all([...S.entries()].map(([I,E])=>r.send("recognize_chord",{notes:E}).then(h=>({beatKey:I,r:h}))))).sort((I,E)=>I.beatKey-E.beatKey).flatMap(({r:I})=>{let E=I.matches[0];return E&&E.score>=.5?[E.chord.name]:[]}).filter((I,E,h)=>E===0||I!==h[E-1]);if(M.length>0){let I=await r.send("analyze",{chord_names:M}),E=ne(I.inferred_key.label);E!==null&&(g.clip.color=E,y++)}}catch{}f++,await u(`Recoloring: ${f} / ${i.length}\u2026`,50+Math.round(f/i.length*50))}})),console.log(`[composition-aide] Session transposed ${o>0?"+":""}${o} semitones, ${y} clips recolored.`)}else console.log(`[composition-aide] Session transposed ${o>0?"+":""}${o} semitones.`)})})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("Scene","Transpose Session\u2026","aide.transposeSession"),t.commands.registerCommand("aide.theoryMachine",m=>{(async s=>{let l=t.getObjectFromHandle(s,q),n=t.application.song,o=n?.rootNote??0,v=Ne[n?.scaleName??"Major"]??"major",d=Ae.replace("</head>",`<script>window._INIT={key:${o},scale:${JSON.stringify(v)}};</script></head>`),i=await t.ui.showModalDialog(`data:text/html,${encodeURIComponent(d)}`,1e3,700),p;try{p=JSON.parse(i)}catch{return}if(!p||p.action!=="writeClip")return;let{chords:u,beatsPerChord:b,totalBeats:y}=p,f=u.flatMap((S,A)=>S.notes.map(M=>({pitch:Math.max(0,Math.min(127,M)),startTime:A*b,duration:b*.95,velocity:90}))),g=u.map(S=>S.name).join(" \u2013 "),w=l.clip;if(w instanceof D)w.notes=f,w.name=g;else{let S=await l.createMidiClip(y);S.notes=f,S.name=g}console.log(`[composition-aide] Theory Machine: wrote ${u.length} chords (${b} beats each) \u2014 "${g}"`)})(m).catch(s=>console.error(s))}),t.ui.registerContextMenuAction("ClipSlot","Modal Explorer\u2026","aide.theoryMachine")}0&&(module.exports={activate});
+`;
+
+// src/extension.ts
+var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+var ABLETON_SCALE_MAP = {
+  "Major": "major",
+  "Minor": "natural_minor",
+  "Dorian": "dorian",
+  "Phrygian": "phrygian",
+  "Lydian": "lydian",
+  "Mixolydian": "mixolydian",
+  "Locrian": "locrian",
+  "Harmonic Minor": "harmonic_minor",
+  "Melodic Minor": "melodic_minor"
+};
+var NOTE_TO_PC = {
+  "C": 0,
+  "C#": 1,
+  "Db": 1,
+  "D": 2,
+  "D#": 3,
+  "Eb": 3,
+  "E": 4,
+  "F": 5,
+  "F#": 6,
+  "Gb": 6,
+  "G": 7,
+  "G#": 8,
+  "Ab": 8,
+  "A": 9,
+  "A#": 10,
+  "Bb": 10,
+  "B": 11
+};
+var COF_POS = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+var MAJOR_SCALE_PCS = [0, 2, 4, 5, 7, 9, 11];
+var MINOR_SCALE_PCS = [0, 2, 3, 5, 7, 8, 10];
+var DORIAN_SCALE_PCS = [0, 2, 3, 5, 7, 9, 10];
+var PHRYGIAN_SCALE_PCS = [0, 1, 3, 5, 7, 8, 10];
+var LYDIAN_SCALE_PCS = [0, 2, 4, 6, 7, 9, 11];
+var MIXOLYDIAN_SCALE_PCS = [0, 2, 4, 5, 7, 9, 10];
+var LOCRIAN_SCALE_PCS = [0, 1, 3, 5, 6, 8, 10];
+var HARMONIC_MINOR_SCALE_PCS = [0, 2, 3, 5, 7, 8, 11];
+var MELODIC_MINOR_SCALE_PCS = [0, 2, 3, 5, 7, 9, 11];
+var PENTATONIC_MAJOR_PCS = [0, 2, 4, 7, 9];
+var PENTATONIC_MINOR_PCS = [0, 3, 5, 7, 10];
+var BLUES_SCALE_PCS = [0, 3, 5, 6, 7, 10];
+var SCALE_PCS_MAP = {
+  major: MAJOR_SCALE_PCS,
+  natural_minor: MINOR_SCALE_PCS,
+  dorian: DORIAN_SCALE_PCS,
+  phrygian: PHRYGIAN_SCALE_PCS,
+  lydian: LYDIAN_SCALE_PCS,
+  mixolydian: MIXOLYDIAN_SCALE_PCS,
+  locrian: LOCRIAN_SCALE_PCS,
+  harmonic_minor: HARMONIC_MINOR_SCALE_PCS,
+  melodic_minor: MELODIC_MINOR_SCALE_PCS,
+  pentatonic_major: PENTATONIC_MAJOR_PCS,
+  pentatonic_minor: PENTATONIC_MINOR_PCS,
+  blues: BLUES_SCALE_PCS
+};
+var SCALE_DISPLAY_LABEL = {
+  major: "major",
+  natural_minor: "minor",
+  dorian: "Dorian",
+  phrygian: "Phrygian",
+  lydian: "Lydian",
+  mixolydian: "Mixolydian",
+  locrian: "Locrian",
+  harmonic_minor: "harmonic minor",
+  melodic_minor: "melodic minor",
+  pentatonic_major: "pentatonic major",
+  pentatonic_minor: "pentatonic minor",
+  blues: "blues"
+};
+var PALETTE_SCALES = [
+  { id: "major", label: "Major" },
+  { id: "natural_minor", label: "Natural Minor" },
+  { id: "dorian", label: "Dorian" },
+  { id: "phrygian", label: "Phrygian" },
+  { id: "lydian", label: "Lydian" },
+  { id: "mixolydian", label: "Mixolydian" },
+  { id: "locrian", label: "Locrian" },
+  { id: "harmonic_minor", label: "Harmonic Minor" },
+  { id: "melodic_minor", label: "Melodic Minor" },
+  { id: "pentatonic_major", label: "Pentatonic Major" },
+  { id: "pentatonic_minor", label: "Pentatonic Minor" },
+  { id: "blues", label: "Blues" }
+];
+function groupNotesByChord(notes, gridBeats = 0.25) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const note of notes) {
+    const snapped = Math.round(note.startTime / gridBeats) * gridBeats;
+    const key = Math.round(snapped * 1e3);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.push(note.pitch);
+    } else {
+      groups.set(key, [note.pitch]);
+    }
+  }
+  return groups;
+}
+function safeJson(data) {
+  return JSON.stringify(data).replace(/</g, "\\u003C").replace(/>/g, "\\u003E");
+}
+function hslToRgbInt(h, s, l) {
+  const sn = s / 100, ln = l / 100;
+  const a = sn * Math.min(ln, 1 - ln);
+  const f = (n) => {
+    const k = (n + h / 30) % 12;
+    return ln - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+  };
+  return Math.round(f(0) * 255) << 16 | Math.round(f(8) * 255) << 8 | Math.round(f(4) * 255);
+}
+function keyLabelToColor(keyLabel) {
+  const m = keyLabel.match(/^([A-G][#b]?)\s+(.*)/);
+  if (!m) return null;
+  const pc = NOTE_TO_PC[m[1] ?? ""];
+  if (pc === void 0) return null;
+  const isMinor = /minor|min\b/i.test(m[2] ?? "");
+  const hue = (COF_POS[pc] ?? 0) * 30;
+  return hslToRgbInt(hue, isMinor ? 55 : 70, isMinor ? 35 : 45);
+}
+async function inferClipKey(notes, eng) {
+  const groups = groupNotesByChord(notes);
+  const recognitions = await Promise.all(
+    [...groups.entries()].map(
+      ([beatKey, pitches]) => eng.send("recognize_chord", { notes: pitches }).then((r) => ({ beatKey, r }))
+    )
+  );
+  const chordNames = recognitions.sort((a, b) => a.beatKey - b.beatKey).flatMap(({ r }) => {
+    const best = r.matches[0];
+    return best && best.score >= 0.5 ? [best.chord.name] : [];
+  }).filter((name, i, arr) => i === 0 || name !== arr[i - 1]);
+  if (chordNames.length > 0) {
+    const analysis = await eng.send("analyze", { chord_names: chordNames });
+    const k = analysis.inferred_key;
+    return { root: k.root, scale: k.scale, label: k.label };
+  }
+  const histogram = new Array(12).fill(0);
+  for (const note of notes) {
+    const pc = note.pitch % 12;
+    histogram[pc] = (histogram[pc] ?? 0) + 1;
+  }
+  let bestScore = -1;
+  let bestKey = null;
+  for (let root = 0; root < 12; root++) {
+    for (const [scaleId, pcs] of Object.entries(SCALE_PCS_MAP)) {
+      let score = 0;
+      for (const interval of pcs) {
+        score += histogram[(root + interval) % 12] ?? 0;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        const noteName = NOTE_NAMES[root] ?? "C";
+        const scaleLabel = SCALE_DISPLAY_LABEL[scaleId] ?? scaleId;
+        bestKey = { root, scale: scaleId, label: `${noteName} ${scaleLabel}` };
+      }
+    }
+  }
+  return bestKey;
+}
+function snapPitchToScale(pitch, scalePCs) {
+  const pc = pitch % 12;
+  if (scalePCs.has(pc)) return pitch;
+  for (let d = 1; d <= 6; d++) {
+    const hasUp = scalePCs.has((pc + d) % 12);
+    const hasDown = scalePCs.has((pc - d + 12) % 12);
+    if (hasUp && hasDown) return pitch + d;
+    if (hasUp) return pitch + d;
+    if (hasDown) return pitch - d;
+  }
+  return pitch;
+}
+function keyLabelShort(label) {
+  const m = label.match(/^([A-G][#b]?)\s+(.+)$/);
+  if (!m) return label;
+  const root = m[1] ?? label;
+  const scale = (m[2] ?? "").toLowerCase().trim();
+  if (scale === "major") return root;
+  if (scale === "minor" || scale === "natural minor" || scale === "natural_minor") return `${root}m`;
+  if (scale === "harmonic minor" || scale === "harmonic_minor") return `${root}hm`;
+  if (scale === "melodic minor" || scale === "melodic_minor") return `${root}mm`;
+  const firstWord = scale.split(/[\s_]/)[0] ?? scale;
+  return `${root} ${firstWord.slice(0, 3)}`;
+}
+function compatibilityLabel(refPc, refIsMinor, otherPc, otherIsMinor) {
+  if (refPc === otherPc && refIsMinor === otherIsMinor) return "Same key";
+  if (refPc === otherPc) return refIsMinor ? "Parallel major" : "Parallel minor";
+  if (!refIsMinor && otherIsMinor && otherPc === (refPc + 9) % 12) return "Relative minor";
+  if (refIsMinor && !otherIsMinor && otherPc === (refPc + 3) % 12) return "Relative major";
+  if (otherPc === (refPc + 7) % 12) return "Dominant (V)";
+  if (otherPc === (refPc + 5) % 12) return "Subdominant (IV)";
+  return null;
+}
+var ROMAN_TOKEN_RE = /^[b#♭♯]?[ivIV]/;
+async function parseProgressionToken(eng, token, key, scale) {
+  const asRoman = async () => (await eng.send("parse_roman", { roman: token, key, scale })).chord;
+  const asName = async () => (await eng.send("parse_chord", { name: token })).chord;
+  const [first, second] = ROMAN_TOKEN_RE.test(token) ? [asRoman, asName] : [asName, asRoman];
+  try {
+    return await first();
+  } catch {
+    try {
+      return await second();
+    } catch {
+      throw new Error(`Couldn't parse "${token}" as a Roman numeral or chord name`);
+    }
+  }
+}
+async function resolveDialogChords(eng, params) {
+  const text = params.customProgression?.trim();
+  if (!text) {
+    const { chords } = await eng.send("progression", {
+      key: params.key,
+      scale: params.scale,
+      template: params.template,
+      sevenths: params.sevenths
+    });
+    return chords;
+  }
+  const tokens = text.split(/[\s,|]+/).filter(Boolean);
+  return Promise.all(
+    tokens.map((tok) => parseProgressionToken(eng, tok, params.key, params.scale))
+  );
+}
+function progressionLabel(params) {
+  return params.customProgression?.trim() || params.template;
+}
+function activate(activation) {
+  const context = initialize(activation, "1.0.0");
+  const cwd = process.env["COMPOSITION_AIDE_PATH"] ?? path.join(__dirname, "..", "engine");
+  const pythonCmd = process.env["PYTHON_CMD"] ?? (process.platform === "win32" ? "python" : "python3");
+  const engine = new ChordgenEngine(cwd, pythonCmd);
+  void engine.send("list_ops").catch(() => void 0);
+  context.commands.registerCommand(
+    "aide.generate",
+    (arg) => void (async (selection) => {
+      const midiTracks = selection.selected_lanes.map((h) => context.getObjectFromHandle(h, DataModelObject)).filter((obj) => obj instanceof MidiTrack);
+      if (!midiTracks.length) {
+        console.log("[composition-aide] No MIDI tracks in selection.");
+        return;
+      }
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(interface_default)}`,
+        380,
+        392
+      );
+      let params;
+      try {
+        params = JSON.parse(rawResult);
+      } catch {
+        return;
+      }
+      if (!params) return;
+      const selectionBeats = selection.time_selection_end - selection.time_selection_start;
+      const chords = await resolveDialogChords(engine, params);
+      const { voicings } = await engine.send("voice_progression", {
+        chords,
+        strategy: params.voicing,
+        octave: 4
+      });
+      const beatsPerChord = selectionBeats / chords.length;
+      const clipName = `${progressionLabel(params)} \u2014 ${params.keyName} ${params.scale.replace(/_/g, " ")}`;
+      let notes = voicings.flatMap(
+        (noteNums, i) => noteNums.map((pitch) => ({
+          pitch: Math.max(0, Math.min(127, pitch)),
+          startTime: i * beatsPerChord,
+          duration: beatsPerChord * 0.95,
+          velocity: 90
+        }))
+      );
+      if (params.snapToScale) {
+        const intervals = SCALE_PCS_MAP[params.scale] ?? MAJOR_SCALE_PCS;
+        const scalePCs = new Set(intervals.map((i) => (params.key + i) % 12));
+        notes = notes.map((n) => ({ ...n, pitch: snapPitchToScale(n.pitch, scalePCs) }));
+      }
+      await Promise.all(midiTracks.map(async (track) => {
+        const clip = await track.createMidiClip(
+          selection.time_selection_start,
+          selectionBeats
+        );
+        clip.name = clipName;
+        clip.notes = notes;
+      }));
+      console.log(
+        `[composition-aide] "${clipName}": ${chords.map((c) => c.name).join(" \u2013 ")} (${beatsPerChord.toFixed(2)} beats/chord)`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction(
+    "MidiTrack.ArrangementSelection",
+    "Generate Progression\u2026",
+    "aide.generate"
+  );
+  context.commands.registerCommand("aide.analyze", (arg) => {
+    const analyzeClip = async (handle) => {
+      const clip = context.getObjectFromHandle(handle, MidiClip);
+      const notes = clip.notes;
+      if (notes.length === 0) {
+        console.log("[composition-aide] Clip has no notes.");
+        return;
+      }
+      const groups = groupNotesByChord(notes);
+      const recognizeResults = await Promise.all(
+        [...groups.entries()].map(
+          ([beatKey, pitches]) => engine.send("recognize_chord", { notes: pitches }).then((result) => ({ beatKey, result }))
+        )
+      );
+      const chordEntries = recognizeResults.sort((a, b) => a.beatKey - b.beatKey).flatMap(({ beatKey, result }) => {
+        const best = result.matches[0];
+        if (!best || best.score < 0.5) return [];
+        return [{ beat: beatKey / 1e3, name: best.chord.name, score: best.score, pitchClasses: best.chord.pitch_classes, root: best.chord.root, quality: best.chord.quality }];
+      }).filter((entry2, i, arr) => i === 0 || entry2.name !== arr[i - 1]?.name);
+      if (chordEntries.length === 0) {
+        console.log("[composition-aide] Could not identify any chords in this clip.");
+        return;
+      }
+      const chordNames = chordEntries.map((e) => e.name);
+      const analysis = await engine.send("analyze", {
+        chord_names: chordNames
+      });
+      const displayData = {
+        clipName: clip.name || "(unnamed clip)",
+        noteCount: notes.length,
+        inferredKey: analysis.inferred_key.label,
+        scaleRoot: analysis.inferred_key.root,
+        scaleIntervals: [...SCALE_PCS_MAP[analysis.inferred_key.scale] ?? MAJOR_SCALE_PCS],
+        chords: chordNames.map((name, i) => ({
+          beat: chordEntries[i]?.beat ?? 0,
+          name,
+          roman: analysis.roman_labels[i] ?? name,
+          tension: analysis.tension[i] ?? 0,
+          score: chordEntries[i]?.score ?? 0,
+          pitchClasses: chordEntries[i]?.pitchClasses ?? [],
+          root: chordEntries[i]?.root ?? 0,
+          quality: chordEntries[i]?.quality ?? "major"
+        })),
+        substitutions: analysis.substitutions.slice(0, 5).map((s) => ({
+          position: s.position,
+          original: s.original.name,
+          replacement: s.replacement.name,
+          rationale: s.rationale
+        })),
+        summary: analysis.summary
+      };
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(
+          results_default.replace("__ANALYSIS_JSON__", safeJson(displayData))
+        )}`,
+        520,
+        560
+      );
+      console.log(
+        `[composition-aide] Analyzed "${displayData.clipName}": ${displayData.inferredKey} \u2014 ${chordNames.join(" \u2013 ")}`
+      );
+      let modalResult;
+      try {
+        modalResult = JSON.parse(rawResult);
+      } catch {
+        return;
+      }
+      if (!modalResult || modalResult.action !== "substitute") return;
+      const { position, original, replacement } = modalResult;
+      const entry = chordEntries[position];
+      if (!entry) {
+        console.error(`[composition-aide] Substitution position ${position} out of range.`);
+        return;
+      }
+      const nextEntry = chordEntries[position + 1];
+      const chordStart = entry.beat;
+      const currentNotes = clip.notes;
+      const lastNoteEnd = Math.max(
+        chordStart + 4,
+        ...currentNotes.map((n) => n.startTime + n.duration)
+      );
+      const chordEnd = nextEntry?.beat ?? lastNoteEnd;
+      const originalChordNotes = currentNotes.filter(
+        (n) => n.startTime >= chordStart - 0.01 && n.startTime < chordEnd - 0.01
+      );
+      const avgPitch = originalChordNotes.length > 0 ? Math.round(
+        originalChordNotes.reduce((sum, n) => sum + n.pitch, 0) / originalChordNotes.length
+      ) : 60;
+      const targetOctave = Math.max(3, Math.min(6, Math.floor(avgPitch / 12) - 1));
+      const voicing = await engine.send("voicings", {
+        name: replacement,
+        octave: targetOctave
+      });
+      const avgDuration = originalChordNotes.length > 0 ? originalChordNotes.reduce((sum, n) => sum + n.duration, 0) / originalChordNotes.length : (chordEnd - chordStart) * 0.95;
+      const newNotes = voicing.close.map((pitch) => ({
+        pitch: Math.max(0, Math.min(127, pitch)),
+        startTime: chordStart,
+        duration: avgDuration,
+        velocity: 90
+      }));
+      clip.notes = [
+        ...currentNotes.filter(
+          (n) => n.startTime < chordStart - 0.01 || n.startTime >= chordEnd - 0.01
+        ),
+        ...newNotes
+      ];
+      console.log(
+        `[composition-aide] Substituted: ${original} \u2192 ${replacement} at beat ${chordStart.toFixed(2)} (octave ${targetOctave})`
+      );
+      await analyzeClip(handle);
+    };
+    void analyzeClip(arg).catch((e) => console.error(e));
+  });
+  context.ui.registerContextMenuAction("MidiClip", "Analyze Harmony\u2026", "aide.analyze");
+  context.commands.registerCommand(
+    "aide.chordPalette",
+    (arg) => void (async (handle) => {
+      const slot = context.getObjectFromHandle(handle, ClipSlot);
+      const song = context.application.song;
+      const rootNote = song?.rootNote ?? 0;
+      const abletonScale = song?.scaleName ?? "Major";
+      const defaultScale = ABLETON_SCALE_MAP[abletonScale] ?? "major";
+      const scaleResults = await Promise.all(
+        PALETTE_SCALES.flatMap(({ id }) => [
+          engine.send("diatonic", { key: rootNote, scale: id, sevenths: false }).then((r) => ({ id, sevenths: false, chords: r.chords })),
+          engine.send("diatonic", { key: rootNote, scale: id, sevenths: true }).then((r) => ({ id, sevenths: true, chords: r.chords }))
+        ])
+      );
+      const scalesData = {};
+      for (const { id, sevenths, chords } of scaleResults) {
+        if (!scalesData[id]) scalesData[id] = { triads: [], sevenths: [], intervals: SCALE_PCS_MAP[id] ?? MAJOR_SCALE_PCS };
+        if (sevenths) scalesData[id].sevenths = chords;
+        else scalesData[id].triads = chords;
+      }
+      const paletteData = {
+        keyRoot: rootNote,
+        keyName: NOTE_NAMES[rootNote] ?? "C",
+        defaultScale,
+        scaleOptions: PALETTE_SCALES,
+        scales: scalesData
+      };
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(
+          palette_default.replace("__PALETTE_JSON__", safeJson(paletteData))
+        )}`,
+        510,
+        296
+      );
+      let paletteResult;
+      try {
+        paletteResult = JSON.parse(rawResult);
+      } catch {
+        return;
+      }
+      if (!paletteResult || paletteResult.action !== "insert") return;
+      const { chordName, length, voicing, octave, selectedScale } = paletteResult;
+      const voicingData = await engine.send("voicings", { name: chordName, octave });
+      const voiced = voicingData[voicing];
+      const newNotes = voiced.map((pitch) => ({
+        pitch: Math.max(0, Math.min(127, pitch)),
+        startTime: 0,
+        duration: length * 0.95,
+        velocity: 90
+      }));
+      const existing = slot.clip;
+      if (existing instanceof MidiClip) {
+        existing.name = chordName;
+        existing.notes = newNotes;
+      } else {
+        const clip = await slot.createMidiClip(length);
+        clip.name = chordName;
+        clip.notes = newNotes;
+      }
+      console.log(
+        `[composition-aide] Inserted ${chordName} (${voicing}, oct ${octave}, ${length} beats) \u2014 ${paletteData.keyName} ${selectedScale}`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("ClipSlot", "Insert Chord\u2026", "aide.chordPalette");
+  context.commands.registerCommand(
+    "aide.sessionMap",
+    (arg) => void (async (_handle) => {
+      const song = context.application.song;
+      if (!song) return;
+      const tracks = song.tracks;
+      const scenes = song.scenes;
+      const sceneNames = scenes.map((s) => s.name);
+      const clipTasks = [];
+      for (let ti = 0; ti < tracks.length; ti++) {
+        const track = tracks[ti];
+        if (!track) continue;
+        const slots = track.clipSlots;
+        for (let si = 0; si < slots.length; si++) {
+          const slot = slots[si];
+          if (!slot) continue;
+          const clip = slot.clip;
+          if (!(clip instanceof MidiClip)) continue;
+          const notes = clip.notes;
+          if (notes.length === 0) continue;
+          clipTasks.push({
+            trackIndex: ti,
+            trackName: track.name,
+            sceneIndex: si,
+            notes,
+            clipName: clip.name || "(unnamed)"
+          });
+        }
+      }
+      const totalMidiClips = clipTasks.length;
+      if (totalMidiClips === 0) {
+        console.log("[composition-aide] No MIDI clips with notes found in session.");
+        return;
+      }
+      const maxScene = clipTasks.reduce((m, t) => Math.max(m, t.sceneIndex), 0);
+      const sceneCount = maxScene + 1;
+      const results = [];
+      await context.ui.withinProgressDialog(
+        `Analyzing session \u2014 ${totalMidiClips} clips\u2026`,
+        { progress: 0 },
+        async (update, abortSignal) => {
+          let completed = 0;
+          await Promise.all(
+            clipTasks.map(async (task) => {
+              if (abortSignal.aborted) return;
+              let key = null;
+              let score = 0;
+              try {
+                const groups = groupNotesByChord(task.notes);
+                const recognitions = await Promise.all(
+                  [...groups.entries()].map(
+                    ([beatKey, pitches]) => engine.send("recognize_chord", { notes: pitches }).then((r) => ({ beatKey, r }))
+                  )
+                );
+                const chordEntries = recognitions.sort((a, b) => a.beatKey - b.beatKey).flatMap(({ beatKey, r }) => {
+                  const best = r.matches[0];
+                  if (!best || best.score < 0.5) return [];
+                  return [{ beat: beatKey / 1e3, name: best.chord.name }];
+                }).filter((e, i, arr) => i === 0 || e.name !== arr[i - 1]?.name);
+                if (chordEntries.length > 0) {
+                  const analysis = await engine.send("analyze", {
+                    chord_names: chordEntries.map((e) => e.name)
+                  });
+                  key = analysis.inferred_key.label;
+                  score = analysis.inferred_key.score;
+                }
+              } catch (err) {
+                console.error(`[composition-aide] Could not analyze ${task.clipName}:`, err);
+              }
+              results.push({ ...task, key, score });
+              completed++;
+              await update(
+                `${completed} / ${totalMidiClips} clips\u2026`,
+                Math.round(completed / totalMidiClips * 100)
+              );
+            })
+          );
+        }
+      );
+      const keyCounts = /* @__PURE__ */ new Map();
+      for (const r of results) {
+        if (r.key) keyCounts.set(r.key, (keyCounts.get(r.key) ?? 0) + 1);
+      }
+      let dominantKey = null;
+      let maxCount = 0;
+      for (const [k, count] of keyCounts) {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantKey = k;
+        }
+      }
+      const trackSet = new Set(results.map((r) => r.trackIndex));
+      const mapTracks = [...trackSet].sort((a, b) => a - b).map((ti) => {
+        const trackName = results.find((r) => r.trackIndex === ti)?.trackName ?? `Track ${ti + 1}`;
+        const clips = Array(sceneCount).fill(null);
+        for (const r of results.filter((r2) => r2.trackIndex === ti)) {
+          clips[r.sceneIndex] = { clipName: r.clipName, key: r.key, score: r.score };
+        }
+        return { name: trackName, clips };
+      });
+      const mapData = {
+        dominantKey,
+        sceneCount,
+        sceneNames: sceneNames.slice(0, sceneCount),
+        totalMidiClips,
+        analyzedClips: results.filter((r) => r.key !== null).length,
+        tracks: mapTracks
+      };
+      await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(
+          sessionmap_default.replace("__SESSION_JSON__", safeJson(mapData))
+        )}`,
+        680,
+        480
+      );
+      console.log(
+        `[composition-aide] Session map: ${mapData.analyzedClips}/${totalMidiClips} clips` + (dominantKey ? ` \u2014 dominant key: ${dominantKey}` : "")
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("Scene", "Map Session Keys\u2026", "aide.sessionMap");
+  context.commands.registerCommand(
+    "aide.colorByKey",
+    (arg) => void (async (_handle) => {
+      const song = context.application.song;
+      if (!song) return;
+      const colorTasks = [];
+      for (const track of song.tracks) {
+        for (const slot of track.clipSlots) {
+          const clip = slot.clip;
+          if (!(clip instanceof MidiClip)) continue;
+          const notes = clip.notes;
+          if (notes.length === 0) continue;
+          colorTasks.push({ clip, notes, clipName: clip.name || "(unnamed)" });
+        }
+      }
+      if (colorTasks.length === 0) {
+        console.log("[composition-aide] No MIDI clips with notes found.");
+        return;
+      }
+      let coloredCount = 0;
+      await context.ui.withinProgressDialog(
+        `Coloring ${colorTasks.length} clips by key\u2026`,
+        { progress: 0 },
+        async (update, abortSignal) => {
+          let completed = 0;
+          await Promise.all(
+            colorTasks.map(async (task) => {
+              if (abortSignal.aborted) return;
+              try {
+                const groups = groupNotesByChord(task.notes);
+                const recognitions = await Promise.all(
+                  [...groups.entries()].map(
+                    ([beatKey, pitches]) => engine.send("recognize_chord", { notes: pitches }).then((r) => ({ beatKey, r }))
+                  )
+                );
+                const chordNames = recognitions.sort((a, b) => a.beatKey - b.beatKey).flatMap(({ r }) => {
+                  const best = r.matches[0];
+                  return best && best.score >= 0.5 ? [best.chord.name] : [];
+                }).filter((name, i, arr) => i === 0 || name !== arr[i - 1]);
+                if (chordNames.length > 0) {
+                  const analysis = await engine.send("analyze", {
+                    chord_names: chordNames
+                  });
+                  const color = keyLabelToColor(analysis.inferred_key.label);
+                  if (color !== null) {
+                    task.clip.color = color;
+                    coloredCount++;
+                  }
+                }
+              } catch (err) {
+                console.error(`[composition-aide] Could not color "${task.clipName}":`, err);
+              }
+              completed++;
+              await update(
+                `${completed} / ${colorTasks.length} clips\u2026`,
+                Math.round(completed / colorTasks.length * 100)
+              );
+            })
+          );
+        }
+      );
+      console.log(
+        `[composition-aide] Colored ${coloredCount} / ${colorTasks.length} clips by key.`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("Scene", "Color Clips by Key", "aide.colorByKey");
+  context.commands.registerCommand(
+    "aide.generateInClip",
+    (arg) => void (async (handle) => {
+      const clip = context.getObjectFromHandle(handle, MidiClip);
+      const clipBeats = clip.looping ? clip.loopEnd - clip.loopStart : clip.duration;
+      const fillBeats = clipBeats > 0 ? clipBeats : 8;
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(interface_default)}`,
+        380,
+        392
+      );
+      let params;
+      try {
+        params = JSON.parse(rawResult);
+      } catch {
+        return;
+      }
+      if (!params) return;
+      const chords = await resolveDialogChords(engine, params);
+      const { voicings } = await engine.send("voice_progression", {
+        chords,
+        strategy: params.voicing,
+        octave: 4
+      });
+      const beatsPerChord = fillBeats / chords.length;
+      let notes = voicings.flatMap(
+        (noteNums, i) => noteNums.map((pitch) => ({
+          pitch: Math.max(0, Math.min(127, pitch)),
+          startTime: i * beatsPerChord,
+          duration: beatsPerChord * 0.95,
+          velocity: 90
+        }))
+      );
+      if (params.snapToScale) {
+        const intervals = SCALE_PCS_MAP[params.scale] ?? MAJOR_SCALE_PCS;
+        const scalePCs = new Set(intervals.map((i) => (params.key + i) % 12));
+        notes = notes.map((n) => ({ ...n, pitch: snapPitchToScale(n.pitch, scalePCs) }));
+      }
+      clip.notes = notes;
+      clip.name = `${progressionLabel(params)} \u2014 ${params.keyName} ${params.scale.replace(/_/g, " ")}`;
+      console.log(
+        `[composition-aide] Generated "${clip.name}": ${chords.map((c) => c.name).join(" \u2013 ")} (${beatsPerChord.toFixed(2)} beats/chord)`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("MidiClip", "Fill Clip with Progression\u2026", "aide.generateInClip");
+  context.commands.registerCommand(
+    "aide.voiceLead",
+    (arg) => void (async (handle) => {
+      const clip = context.getObjectFromHandle(handle, MidiClip);
+      const notes = clip.notes;
+      if (notes.length === 0) {
+        console.log("[composition-aide] Clip has no notes.");
+        return;
+      }
+      const groups = groupNotesByChord(notes);
+      const recognizeResults = await Promise.all(
+        [...groups.entries()].map(
+          ([beatKey, pitches]) => engine.send("recognize_chord", { notes: pitches }).then((r) => ({ beatKey, r }))
+        )
+      );
+      const chordEntries = recognizeResults.sort((a, b) => a.beatKey - b.beatKey).flatMap(({ beatKey, r }) => {
+        const best = r.matches[0];
+        if (!best || best.score < 0.5) return [];
+        return [{ beat: beatKey / 1e3, name: best.chord.name }];
+      }).filter((e, i, arr) => i === 0 || e.name !== arr[i - 1]?.name);
+      if (chordEntries.length === 0) {
+        console.log("[composition-aide] No chords identified in clip.");
+        return;
+      }
+      const avgPitch = Math.round(notes.reduce((s, n) => s + n.pitch, 0) / notes.length);
+      const voiceOctave = Math.max(3, Math.min(6, Math.floor(avgPitch / 12) - 1));
+      const { voicings } = await engine.send("voice_progression", {
+        chords: chordEntries.map((e) => e.name),
+        strategy: "smooth",
+        octave: voiceOctave
+      });
+      const snapMap = /* @__PURE__ */ new Map();
+      for (const note of notes) {
+        const snapped = Math.round(note.startTime / 0.25) * 0.25;
+        const key = Math.round(snapped * 1e3);
+        const arr = snapMap.get(key) ?? [];
+        arr.push(note);
+        snapMap.set(key, arr);
+      }
+      const chordBeatMs = new Set(chordEntries.map((e) => Math.round(e.beat * 1e3)));
+      const newNotes = [];
+      for (let i = 0; i < chordEntries.length; i++) {
+        const entry = chordEntries[i];
+        const voicing = voicings[i] ?? [];
+        if (!entry || voicing.length === 0) continue;
+        const beatMs = Math.round(entry.beat * 1e3);
+        const originals = snapMap.get(beatMs) ?? [];
+        const avgDur = originals.length > 0 ? originals.reduce((s, n) => s + n.duration, 0) / originals.length : 2;
+        const avgVel = originals.length > 0 ? Math.round(originals.reduce((s, n) => s + (n.velocity ?? 90), 0) / originals.length) : 90;
+        for (const pitch of voicing) {
+          newNotes.push({
+            pitch: Math.max(0, Math.min(127, pitch)),
+            startTime: entry.beat,
+            duration: avgDur,
+            velocity: avgVel
+          });
+        }
+      }
+      const nonChordNotes = notes.filter((n) => {
+        const snapped = Math.round(Math.round(n.startTime / 0.25) * 0.25 * 1e3);
+        return !chordBeatMs.has(snapped);
+      });
+      clip.notes = [...nonChordNotes, ...newNotes];
+      console.log(
+        `[composition-aide] Voice-led "${clip.name || "(unnamed)"}": ${chordEntries.length} chords, octave ${voiceOctave}`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("MidiClip", "Optimize Voice Leading", "aide.voiceLead");
+  context.commands.registerCommand(
+    "aide.snapToKey",
+    (arg) => void (async (handle) => {
+      const clip = context.getObjectFromHandle(handle, MidiClip);
+      const notes = clip.notes;
+      if (notes.length === 0) {
+        console.log("[composition-aide] Clip has no notes.");
+        return;
+      }
+      const keyInfo = await inferClipKey(notes, engine);
+      if (!keyInfo) {
+        console.log("[composition-aide] Could not determine key for this clip.");
+        return;
+      }
+      const scaleResult = await engine.send("scale_info", {
+        key: keyInfo.root,
+        scale: keyInfo.scale
+      });
+      const allowedPCs = new Set(scaleResult.notes);
+      const kept = notes.filter((n) => allowedPCs.has(n.pitch % 12));
+      const removed = notes.length - kept.length;
+      clip.notes = kept;
+      console.log(
+        `[composition-aide] Snapped "${clip.name || "(unnamed)"}" to ${keyInfo.label}: removed ${removed} out-of-key notes, kept ${kept.length}`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("MidiClip", "Snap to Key", "aide.snapToKey");
+  context.commands.registerCommand(
+    "aide.batchTranspose",
+    (arg) => void (async (selection) => {
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(transpose_default)}`,
+        300,
+        200
+      );
+      let modalResult;
+      try {
+        modalResult = JSON.parse(rawResult);
+      } catch {
+        return;
+      }
+      if (!modalResult || modalResult.action !== "transpose") return;
+      const { semitones } = modalResult;
+      if (semitones === 0) return;
+      let transposedClips = 0;
+      for (const slotHandle of selection.selected_clip_slots) {
+        const slot = context.getObjectFromHandle(slotHandle, ClipSlot);
+        const clip = slot.clip;
+        if (!(clip instanceof MidiClip)) continue;
+        const notes = clip.notes;
+        if (notes.length === 0) continue;
+        clip.notes = notes.map((n) => ({
+          pitch: Math.max(0, Math.min(127, n.pitch + semitones)),
+          startTime: n.startTime,
+          duration: n.duration,
+          velocity: n.velocity ?? 90
+        }));
+        transposedClips++;
+      }
+      console.log(
+        `[composition-aide] Transposed ${transposedClips} clips ${semitones > 0 ? "+" : ""}${semitones} semitones`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction(
+    "ClipSlotSelection",
+    "Transpose Selected Clips\u2026",
+    "aide.batchTranspose"
+  );
+  context.commands.registerCommand(
+    "aide.findCompatible",
+    (arg) => void (async (handle) => {
+      const clip = context.getObjectFromHandle(handle, MidiClip);
+      const notes = clip.notes;
+      if (notes.length === 0) {
+        console.log("[composition-aide] Clip has no notes.");
+        return;
+      }
+      const refKey = await inferClipKey(notes, engine);
+      if (!refKey) {
+        console.log("[composition-aide] Could not determine key for reference clip.");
+        return;
+      }
+      const song = context.application.song;
+      if (!song) return;
+      const refIsMinor = /minor|min\b/i.test(refKey.scale);
+      const scanTasks = [];
+      for (const track of song.tracks) {
+        for (const slot of track.clipSlots) {
+          const c = slot.clip;
+          if (!(c instanceof MidiClip)) continue;
+          const cNotes = c.notes;
+          if (cNotes.length === 0) continue;
+          scanTasks.push({ trackName: track.name, clip: c, notes: cNotes });
+        }
+      }
+      const compatible = [];
+      await context.ui.withinProgressDialog(
+        "Scanning session for compatible clips\u2026",
+        { progress: 0 },
+        async (update, abortSignal) => {
+          let completed = 0;
+          await Promise.all(
+            scanTasks.map(async (task) => {
+              if (abortSignal.aborted) return;
+              try {
+                const keyInfo = await inferClipKey(task.notes, engine);
+                if (keyInfo) {
+                  const otherIsMinor = /minor|min\b/i.test(keyInfo.scale);
+                  const label = compatibilityLabel(
+                    refKey.root,
+                    refIsMinor,
+                    keyInfo.root,
+                    otherIsMinor
+                  );
+                  if (label) {
+                    compatible.push({
+                      trackName: task.trackName,
+                      clipName: task.clip.name || "(unnamed)",
+                      key: keyInfo.label,
+                      compatibility: label,
+                      color: keyLabelToColor(keyInfo.label) ?? 4473924
+                    });
+                  }
+                }
+              } catch (err) {
+                console.error(
+                  `[composition-aide] Error scanning "${task.clip.name}":`,
+                  err
+                );
+              }
+              completed++;
+              await update(
+                `${completed} / ${scanTasks.length} clips\u2026`,
+                Math.round(completed / scanTasks.length * 100)
+              );
+            })
+          );
+        }
+      );
+      const ORDER = [
+        "Same key",
+        "Relative minor",
+        "Relative major",
+        "Parallel major",
+        "Parallel minor",
+        "Dominant (V)",
+        "Subdominant (IV)"
+      ];
+      compatible.sort((a, b) => {
+        const ai = ORDER.indexOf(a.compatibility);
+        const bi = ORDER.indexOf(b.compatibility);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+      const suggTargets = [
+        { root: refKey.root, scale: refKey.scale, label: refKey.label, relationship: "Same key" }
+      ];
+      const relRoot = refIsMinor ? (refKey.root + 3) % 12 : (refKey.root + 9) % 12;
+      suggTargets.push({
+        root: relRoot,
+        scale: refIsMinor ? "major" : "natural_minor",
+        label: `${NOTE_NAMES[relRoot] ?? "C"} ${refIsMinor ? "major" : "minor"}`,
+        relationship: refIsMinor ? "Relative major" : "Relative minor"
+      });
+      const domRoot = (refKey.root + 7) % 12;
+      suggTargets.push({
+        root: domRoot,
+        scale: refKey.scale,
+        label: `${NOTE_NAMES[domRoot] ?? "C"} ${refIsMinor ? "minor" : "major"}`,
+        relationship: "Dominant (V)"
+      });
+      const subRoot = (refKey.root + 5) % 12;
+      suggTargets.push({
+        root: subRoot,
+        scale: refKey.scale,
+        label: `${NOTE_NAMES[subRoot] ?? "C"} ${refIsMinor ? "minor" : "major"}`,
+        relationship: "Subdominant (IV)"
+      });
+      const SUGG_TEMPLATES = ["I-V-vi-IV", "I-IV-V-I", "ii-V-I"];
+      const suggestions = [];
+      await Promise.all(
+        suggTargets.flatMap((target, ti) => {
+          const templates = ti === 0 ? SUGG_TEMPLATES : SUGG_TEMPLATES.slice(0, 2);
+          return templates.map(async (template) => {
+            try {
+              const result = await engine.send("progression", {
+                key: target.root,
+                scale: target.scale,
+                template,
+                sevenths: false
+              });
+              suggestions.push({
+                relationship: target.relationship,
+                keyLabel: target.label,
+                template,
+                chords: result.chords.map((c) => c.name),
+                color: keyLabelToColor(target.label) ?? 4473924
+              });
+            } catch {
+            }
+          });
+        })
+      );
+      const SUGG_ORDER = ["Same key", "Relative minor", "Relative major", "Dominant (V)", "Subdominant (IV)"];
+      suggestions.sort((a, b) => {
+        const ai = SUGG_ORDER.indexOf(a.relationship);
+        const bi = SUGG_ORDER.indexOf(b.relationship);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+      const displayData = {
+        refClipName: clip.name || "(unnamed)",
+        refKey: refKey.label,
+        results: compatible,
+        suggestions
+      };
+      const rawCompatResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(
+          compatible_default.replace("__COMPATIBLE_JSON__", safeJson(displayData))
+        )}`,
+        620,
+        560
+      );
+      let modalResult = null;
+      try {
+        const p = JSON.parse(rawCompatResult);
+        if (p && typeof p.action === "string") modalResult = p;
+      } catch {
+      }
+      if (modalResult?.action === "writeProgression") {
+        const sugg = modalResult.suggestion;
+        let emptySlot = null;
+        outer: for (const track of song.tracks) {
+          if (!(track instanceof MidiTrack)) continue;
+          for (const slot of track.clipSlots) {
+            if (slot.clip === null) {
+              emptySlot = slot;
+              break outer;
+            }
+          }
+        }
+        if (!emptySlot) {
+          console.log("[composition-aide] No empty MIDI slot found \u2014 add an empty slot to a MIDI track.");
+        } else {
+          const beatsPerChord = 2;
+          const totalBeats = sugg.chords.length * beatsPerChord;
+          const allNotes = [];
+          for (let i = 0; i < sugg.chords.length; i++) {
+            try {
+              const v = await engine.send(
+                "voicings",
+                { name: sugg.chords[i], octave: 4 }
+              );
+              for (const pitch of v.close ?? []) {
+                allNotes.push({
+                  pitch: Math.max(0, Math.min(127, pitch)),
+                  startTime: i * beatsPerChord,
+                  duration: beatsPerChord * 0.95,
+                  velocity: 90
+                });
+              }
+            } catch {
+              console.warn(`[composition-aide] Could not voice chord "${sugg.chords[i]}"`);
+            }
+          }
+          const newClip = await emptySlot.createMidiClip(totalBeats);
+          newClip.notes = allNotes;
+          newClip.name = `${sugg.keyLabel} \xB7 ${sugg.template}`;
+          newClip.color = sugg.color;
+          console.log(`[composition-aide] Wrote "${newClip.name}" (${sugg.chords.join(" \u2013 ")}) to empty slot`);
+        }
+      }
+      console.log(
+        `[composition-aide] Found ${compatible.length} compatible clips for "${displayData.refClipName}" (${refKey.label})`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction(
+    "MidiClip",
+    "Find Compatible Clips\u2026",
+    "aide.findCompatible"
+  );
+  context.commands.registerCommand(
+    "aide.snapToScale",
+    (arg) => void (async (handle) => {
+      const clip = context.getObjectFromHandle(handle, MidiClip);
+      const notes = clip.notes;
+      if (notes.length === 0) {
+        console.log("[composition-aide] Clip has no notes.");
+        return;
+      }
+      const keyInfo = await inferClipKey(notes, engine);
+      if (!keyInfo) {
+        console.log("[composition-aide] Could not determine key for this clip.");
+        return;
+      }
+      const scaleResult = await engine.send("scale_info", {
+        key: keyInfo.root,
+        scale: keyInfo.scale
+      });
+      const scalePCs = new Set(scaleResult.notes);
+      let snapped = 0;
+      const newNotes = notes.map((n) => {
+        const newPitch = snapPitchToScale(n.pitch, scalePCs);
+        if (newPitch !== n.pitch) snapped++;
+        return { ...n, pitch: newPitch };
+      });
+      clip.notes = newNotes;
+      console.log(
+        `[composition-aide] Snapped "${clip.name || "(unnamed)"}" to ${keyInfo.label}: ${snapped} notes adjusted, ${notes.length - snapped} already in scale`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("MidiClip", "Snap Notes to Scale", "aide.snapToScale");
+  context.commands.registerCommand(
+    "aide.labelClipKey",
+    (arg) => void (async (handle) => {
+      const clip = context.getObjectFromHandle(handle, MidiClip);
+      const notes = clip.notes;
+      if (notes.length === 0) {
+        console.log("[composition-aide] Clip has no notes.");
+        return;
+      }
+      const keyInfo = await inferClipKey(notes, engine);
+      if (!keyInfo) {
+        console.log("[composition-aide] Could not determine key for this clip.");
+        return;
+      }
+      const baseName = (clip.name || "").replace(/ \[[^\]]*\]$/, "").trim();
+      const newName = baseName.length > 0 ? `${baseName} [${keyLabelShort(keyInfo.label)}]` : `[${keyLabelShort(keyInfo.label)}]`;
+      clip.name = newName;
+      console.log(`[composition-aide] Labeled clip: "${newName}" (${keyInfo.label})`);
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("MidiClip", "Label with Key", "aide.labelClipKey");
+  context.commands.registerCommand(
+    "aide.labelAllKeys",
+    (arg) => void (async (_handle) => {
+      const song = context.application.song;
+      if (!song) return;
+      const tasks = [];
+      for (const track of song.tracks) {
+        for (const slot of track.clipSlots) {
+          const c = slot.clip;
+          if (!(c instanceof MidiClip)) continue;
+          const n = c.notes;
+          if (n.length === 0) continue;
+          tasks.push({ clip: c, notes: n });
+        }
+      }
+      if (tasks.length === 0) {
+        console.log("[composition-aide] No MIDI clips with notes found.");
+        return;
+      }
+      let labeled = 0;
+      await context.ui.withinProgressDialog(
+        `Labeling ${tasks.length} clips\u2026`,
+        { progress: 0 },
+        async (update, abortSignal) => {
+          let completed = 0;
+          await Promise.all(
+            tasks.map(async (task) => {
+              if (abortSignal.aborted) return;
+              try {
+                const keyInfo = await inferClipKey(task.notes, engine);
+                if (keyInfo) {
+                  const baseName = (task.clip.name || "").replace(/ \[[^\]]*\]$/, "").trim();
+                  task.clip.name = baseName.length > 0 ? `${baseName} [${keyLabelShort(keyInfo.label)}]` : `[${keyLabelShort(keyInfo.label)}]`;
+                  labeled++;
+                }
+              } catch (err) {
+                console.error(`[composition-aide] Could not label "${task.clip.name}":`, err);
+              }
+              completed++;
+              await update(
+                `${completed} / ${tasks.length} clips\u2026`,
+                Math.round(completed / tasks.length * 100)
+              );
+            })
+          );
+        }
+      );
+      console.log(`[composition-aide] Labeled ${labeled} / ${tasks.length} clips with key.`);
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("Scene", "Label All Clips with Key", "aide.labelAllKeys");
+  context.commands.registerCommand(
+    "aide.transposeSession",
+    (arg) => void (async (_handle) => {
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(transposesession_default)}`,
+        300,
+        250
+      );
+      let modalResult;
+      try {
+        modalResult = JSON.parse(rawResult);
+      } catch {
+        return;
+      }
+      if (!modalResult || modalResult.action !== "transpose") return;
+      const { semitones, recolor } = modalResult;
+      const song = context.application.song;
+      if (!song) return;
+      const allClips = [];
+      for (const track of song.tracks) {
+        for (const slot of track.clipSlots) {
+          const c = slot.clip;
+          if (!(c instanceof MidiClip)) continue;
+          allClips.push({ clip: c, clipName: c.name || "(unnamed)" });
+        }
+      }
+      if (allClips.length === 0) {
+        console.log("[composition-aide] No MIDI clips found in session.");
+        return;
+      }
+      const progressLabel = recolor ? `Transposing + recoloring ${allClips.length} clips\u2026` : `Transposing ${allClips.length} clips\u2026`;
+      await context.ui.withinProgressDialog(
+        progressLabel,
+        { progress: 0 },
+        async (update, abortSignal) => {
+          if (semitones !== 0) {
+            let done = 0;
+            for (const task of allClips) {
+              if (abortSignal.aborted) return;
+              const notes = task.clip.notes;
+              if (notes.length > 0) {
+                task.clip.notes = notes.map((n) => ({
+                  ...n,
+                  pitch: Math.max(0, Math.min(127, n.pitch + semitones))
+                }));
+              }
+              done++;
+              await update(
+                `Transposing: ${done} / ${allClips.length}\u2026`,
+                recolor ? Math.round(done / allClips.length * 50) : Math.round(done / allClips.length * 100)
+              );
+            }
+          }
+          if (recolor && !abortSignal.aborted) {
+            let coloredCount = 0;
+            let done = 0;
+            await Promise.all(
+              allClips.map(async (task) => {
+                if (abortSignal.aborted) return;
+                try {
+                  const notes = task.clip.notes;
+                  if (notes.length === 0) return;
+                  const groups = groupNotesByChord(notes);
+                  const recognitions = await Promise.all(
+                    [...groups.entries()].map(
+                      ([beatKey, pitches]) => engine.send("recognize_chord", { notes: pitches }).then((r) => ({ beatKey, r }))
+                    )
+                  );
+                  const chordNames = recognitions.sort((a, b) => a.beatKey - b.beatKey).flatMap(({ r }) => {
+                    const best = r.matches[0];
+                    return best && best.score >= 0.5 ? [best.chord.name] : [];
+                  }).filter((name, i, arr) => i === 0 || name !== arr[i - 1]);
+                  if (chordNames.length > 0) {
+                    const analysis = await engine.send("analyze", {
+                      chord_names: chordNames
+                    });
+                    const color = keyLabelToColor(analysis.inferred_key.label);
+                    if (color !== null) {
+                      task.clip.color = color;
+                      coloredCount++;
+                    }
+                  }
+                } catch {
+                }
+                done++;
+                await update(
+                  `Recoloring: ${done} / ${allClips.length}\u2026`,
+                  50 + Math.round(done / allClips.length * 50)
+                );
+              })
+            );
+            console.log(
+              `[composition-aide] Session transposed ${semitones > 0 ? "+" : ""}${semitones} semitones, ${coloredCount} clips recolored.`
+            );
+          } else {
+            console.log(
+              `[composition-aide] Session transposed ${semitones > 0 ? "+" : ""}${semitones} semitones.`
+            );
+          }
+        }
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("Scene", "Transpose Session\u2026", "aide.transposeSession");
+  context.commands.registerCommand(
+    "aide.theoryMachine",
+    (arg) => void (async (handle) => {
+      const slot = context.getObjectFromHandle(handle, ClipSlot);
+      const song = context.application.song;
+      const initKey = song?.rootNote ?? 0;
+      const initScale = ABLETON_SCALE_MAP[song?.scaleName ?? "Major"] ?? "major";
+      const htmlWithInit = theory_machine_default.replace(
+        "</head>",
+        `<script>window._INIT={key:${initKey},scale:${JSON.stringify(initScale)}};</script></head>`
+      );
+      const rawResult = await context.ui.showModalDialog(
+        `data:text/html,${encodeURIComponent(htmlWithInit)}`,
+        1e3,
+        700
+      );
+      let result;
+      try {
+        result = JSON.parse(rawResult);
+      } catch {
+        return;
+      }
+      if (!result || result.action !== "writeClip") return;
+      const { chords, beatsPerChord, totalBeats } = result;
+      const newNotes = chords.flatMap(
+        (chord, i) => chord.notes.map((pitch) => ({
+          pitch: Math.max(0, Math.min(127, pitch)),
+          startTime: i * beatsPerChord,
+          duration: beatsPerChord * 0.95,
+          velocity: 90
+        }))
+      );
+      const clipName = chords.map((c) => c.name).join(" \u2013 ");
+      const existing = slot.clip;
+      if (existing instanceof MidiClip) {
+        existing.notes = newNotes;
+        existing.name = clipName;
+      } else {
+        const clip = await slot.createMidiClip(totalBeats);
+        clip.notes = newNotes;
+        clip.name = clipName;
+      }
+      console.log(
+        `[composition-aide] Theory Machine: wrote ${chords.length} chords (${beatsPerChord} beats each) \u2014 "${clipName}"`
+      );
+    })(arg).catch((e) => console.error(e))
+  );
+  context.ui.registerContextMenuAction("ClipSlot", "Modal Explorer\u2026", "aide.theoryMachine");
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  activate
+});
+//# sourceMappingURL=extension.js.map
