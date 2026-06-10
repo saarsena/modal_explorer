@@ -1,6 +1,6 @@
 # Composition Aide
 
-A music theory extension for Ableton Live built on the Ableton Extensions SDK (1.0.0-beta.0). Composition Aide adds harmonic intelligence directly into Live's context menus — generate voiced progressions, analyze harmony, explore modes, find compatible clips, and get a per-chord improv guide including upper structure triads and frequency references for spectral work.
+A music theory extension for Ableton Live built on the Ableton Extensions SDK (1.0.0-beta.0). Composition Aide adds harmonic intelligence directly into Live's context menus; generate voiced progressions, analyze harmony, explore modes, find compatible clips, and get a per-chord improv guide including upper structure triads and frequency references for spectral work.
 
 All theory operations are handled by a local Python engine that ships **inside the extension** and runs as a subprocess alongside Live. No cloud, no latency, no pip installs.
 
@@ -13,7 +13,7 @@ All theory operations are handled by a local Python engine that ships **inside t
 | | |
 |---|---|
 | **Ableton Live** | A Live build with the **Extensions platform** (currently in closed beta via Centercode). Regular Live releases do **not** include the Extension Host. Not in the beta yet? Ask in the Ableton Discord `#extensions` channel. |
-| **Python 3.9+** | The theory engine is pure Python standard library — no packages to install. See per-OS notes below. |
+| **Python 3.9+** | The theory engine is pure Python standard library, no packages to install. See per-OS notes below. |
 
 That's it for regular use. Node.js is only needed if you're [building from source](#building-from-source).
 
