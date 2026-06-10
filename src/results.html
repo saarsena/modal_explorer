@@ -40,6 +40,115 @@
         .filter((d, i, arr) => arr.indexOf(d) === i);
     }
 
+    // ── Built-in synth preview (WebAudio) ──────────────────────────────────────
+    let _ac = null, _bus = null;
+    function audioCtx() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!_ac) _ac = new AC();
+      if (_ac.state === 'suspended') _ac.resume();
+      return _ac;
+    }
+    function synthBus() {
+      const ac = audioCtx();
+      if (!ac) return null;
+      if (!_bus) {
+        _bus = ac.createGain();
+        const lp = ac.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.4;
+        _bus.connect(lp); lp.connect(ac.destination);
+      }
+      return _bus;
+    }
+    function stopAllSynth() {
+      if (_bus) { try { _bus.disconnect(); } catch { /* already gone */ } _bus = null; }
+    }
+    function synthChord(midiNotes, when = 0, durSec = 1.1, velocity = 0.85) {
+      const bus = synthBus();
+      if (!bus || !midiNotes || midiNotes.length === 0) return;
+      const t0 = _ac.currentTime + when;
+      const peak = 0.22 * velocity / Math.sqrt(Math.max(1, midiNotes.length));
+      for (const m of midiNotes) {
+        const osc = _ac.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = 440 * Math.pow(2, (m - 69) / 12);
+        const g = _ac.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+        g.gain.exponentialRampToValueAtTime(peak * 0.5, t0 + Math.min(0.35, durSec * 0.4));
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + durSec);
+        osc.connect(g); g.connect(bus);
+        osc.start(t0); osc.stop(t0 + durSec + 0.05);
+      }
+    }
+    function stackPcs(pcs, octave) {
+      const base = (octave + 1) * 12;
+      const out = [];
+      let prev = -Infinity;
+      for (const pc of pcs ?? []) {
+        let p = base + (pc % 12);
+        while (p <= prev) p += 12;
+        out.push(p); prev = p;
+      }
+      return out;
+    }
+
+    // ── Progression playback (uses the clip's actual chord timing) ────────────
+    let progPlaying = false;
+    let progTimers = [];
+    function toggleProgPlay() {
+      if (progPlaying) { stopProgPlay(); return; }
+      const chords = DATA.chords;
+      if (chords.length === 0) return;
+      const spb = 60 / 110; // playback at 110 BPM
+      const beat0 = chords[0].beat ?? 0;
+      const boxes = [...document.querySelectorAll('#progression .chord-box')];
+      progPlaying = true;
+      document.getElementById('play-prog').textContent = '■';
+      let end = 0;
+      chords.forEach((ch, i) => {
+        const start = ((ch.beat ?? 0) - beat0) * spb;
+        const nextBeat = chords[i + 1]?.beat;
+        const span = nextBeat !== undefined ? Math.max(0.5, nextBeat - (ch.beat ?? 0)) : 2;
+        const dur = span * spb;
+        synthChord(stackPcs(ch.pitchClasses, 4), start, dur * 1.15, 0.9);
+        progTimers.push(setTimeout(() => {
+          boxes.forEach(b => b.classList.remove('playing'));
+          boxes[i]?.classList.add('playing');
+        }, start * 1000));
+        end = start + dur;
+      });
+      progTimers.push(setTimeout(stopProgPlay, end * 1000 + 300));
+    }
+    function stopProgPlay() {
+      progPlaying = false;
+      for (const t of progTimers) clearTimeout(t);
+      progTimers = [];
+      stopAllSynth();
+      document.querySelectorAll('#progression .chord-box.playing')
+        .forEach(b => b.classList.remove('playing'));
+      document.getElementById('play-prog').textContent = '▶';
+    }
+
+    // ── Substitution preview: original then replacement, back to back ─────────
+    async function previewSub(original, replacement) {
+      try {
+        const get = async name => {
+          const r = await fetch('http://127.0.0.1:7842', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ op: 'parse_chord', name }),
+          });
+          const d = await r.json();
+          if (d.error) throw new Error(d.error);
+          return d.result.chord.pitch_classes;
+        };
+        const [a, b] = await Promise.all([get(original), get(replacement)]);
+        synthChord(stackPcs(a, 4), 0, 0.85, 0.8);
+        synthChord(stackPcs(b, 4), 0.9, 1.3, 0.95);
+      } catch { /* engine HTTP unreachable — no preview */ }
+    }
+
     // ── Solo Map helpers ───────────────────────────────────────────────────────
 
     const NOTE_NAMES      = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
@@ -143,8 +252,13 @@
           `<span class="roman">${esc(chord.roman)}</span>` +
           `<span class="chord-name">${esc(chord.name)}</span>` +
           degsHtml;
+        box.title = 'Click to hear';
+        box.addEventListener('click', () =>
+          synthChord(stackPcs(chord.pitchClasses, 4), 0, 1.1, 0.85));
         prog.appendChild(box);
       });
+
+      document.getElementById('play-prog').addEventListener('click', toggleProgPlay);
 
       // Substitutions
       const subSection = document.getElementById('sub-section');
@@ -161,7 +275,10 @@
               `<span class="sub-replacement">${esc(s.replacement)}</span>` +
             `</span>` +
             `<span class="sub-rationale">${esc(s.rationale)}</span>` +
+            `<button class="apply-btn listen-btn" title="Hear original, then substitution">▶</button>` +
             `<button class="apply-btn" onclick="applySub(${s.position}, '${esc(s.original)}', '${esc(s.replacement)}')">Apply</button>`;
+          li.querySelector('.listen-btn').addEventListener('click', () =>
+            previewSub(s.original, s.replacement));
           subList.appendChild(li);
         });
       }
@@ -241,6 +358,17 @@
           `<div class="sm-tones">${tonesHtml}</div>` +
           charHtml +
           ustHtml;
+
+        // Make upper structure cards audible: low chord root + the upper triad
+        entry.querySelectorAll('.ust-card').forEach((card, idx) => {
+          const ust = DOMINANT_USTS[idx];
+          if (!ust) return;
+          card.title = 'Click to hear over the chord root';
+          card.addEventListener('click', () => {
+            const triad = upperTriadHz((rootPc + ust.semi) % 12).map(t => t.midi);
+            synthChord([36 + rootPc, ...triad], 0, 1.5, 0.9);
+          });
+        });
 
         soloMap.appendChild(entry);
       });
@@ -323,7 +451,11 @@
       padding: 0.4em 0.7em 0.3em;
       min-width: 3.5em;
       gap: 0.15em;
+      cursor: pointer;
+      user-select: none;
     }
+    .chord-box:hover { background: hsl(0,0%,14%); }
+    .chord-box.playing { border-color: var(--c-accent); }
     .roman      { color: var(--c-accent); font-size: 0.9em; }
     .chord-name { color: var(--c-text); font-size: 1.05em; }
     .degrees    { color: var(--c-text-dim); font-size: 0.78em; letter-spacing: 0.06em; }
@@ -342,7 +474,7 @@
 
     #sub-list li {
       display: grid;
-      grid-template-columns: 7em 1fr auto;
+      grid-template-columns: 7em 1fr auto auto;
       align-items: center;
       gap: 0.6em;
     }
@@ -446,7 +578,9 @@
       display: flex;
       flex-direction: column;
       gap: 0.2em;
+      cursor: pointer;
     }
+    .ust-card:hover { background: hsl(0,0%,11%); outline: 1px solid hsl(0,0%,18%); }
 
     .ust-head {
       display: flex;
@@ -510,7 +644,10 @@
       </div>
     </div>
     <div>
-      <div class="section-label">Progression</div>
+      <div class="section-label" style="display:flex;align-items:center;gap:0.6em">
+        Progression
+        <button id="play-prog" class="apply-btn" title="Play the progression">▶</button>
+      </div>
       <div id="progression"></div>
     </div>
   </div>

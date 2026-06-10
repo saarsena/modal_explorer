@@ -253,6 +253,7 @@
       color: var(--dim);
     }
     .prog-actions { display: flex; gap: 0.35em; }
+    .chip.playing { box-shadow: 0 0 0 1px hsl(31 100% 67%); }
     #prog-chips {
       display: flex; align-items: center; gap: 0.4em; flex-wrap: wrap;
       min-height: 1.8em;
@@ -451,6 +452,7 @@
   <div class="prog-header">
     <span class="section-label">Vamp</span>
     <div class="prog-actions">
+      <button class="sm-btn" id="vamp-btn" disabled>▶ Play</button>
       <button class="sm-btn" id="clear-btn" disabled>Clear</button>
       <button class="sm-btn primary" id="analyze-btn" disabled>Interpret →</button>
     </div>
@@ -768,6 +770,106 @@ async function post(op, params = {}) {
   return data.result;
 }
 
+// ── Built-in synth preview (WebAudio) ────────────────────────────────────────
+// Default sound everywhere; Web MIDI (when a port is selected) takes priority
+// in the Play button so hardware/soft synths can be used instead.
+
+let _ac = null, _bus = null;
+function audioCtx() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!_ac) _ac = new AC();
+  if (_ac.state === 'suspended') _ac.resume();
+  return _ac;
+}
+function synthBus() {
+  const ac = audioCtx();
+  if (!ac) return null;
+  if (!_bus) {
+    _bus = ac.createGain();
+    const lp = ac.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.4;
+    _bus.connect(lp); lp.connect(ac.destination);
+  }
+  return _bus;
+}
+function stopAllSynth() {
+  if (_bus) { try { _bus.disconnect(); } catch { /* already gone */ } _bus = null; }
+}
+function synthChord(midiNotes, when = 0, durSec = 1.2, velocity = 0.9) {
+  const bus = synthBus();
+  if (!bus || !midiNotes || midiNotes.length === 0) return;
+  const t0 = _ac.currentTime + when;
+  const peak = 0.22 * velocity / Math.sqrt(Math.max(1, midiNotes.length));
+  for (const m of midiNotes) {
+    const osc = _ac.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = 440 * Math.pow(2, (m - 69) / 12);
+    const g = _ac.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(peak * 0.5, t0 + Math.min(0.35, durSec * 0.4));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + durSec);
+    osc.connect(g); g.connect(bus);
+    osc.start(t0); osc.stop(t0 + durSec + 0.05);
+  }
+}
+function stackPcs(pcs, octave) {
+  const base = (octave + 1) * 12;
+  const out = [];
+  let prev = -Infinity;
+  for (const pc of pcs ?? []) {
+    let p = base + (pc % 12);
+    while (p <= prev) p += 12;
+    out.push(p); prev = p;
+  }
+  return out;
+}
+
+// ── Vamp playback ─────────────────────────────────────────────────────────────
+
+let vampActive = false;
+let vampTimers = [];
+
+async function toggleVamp() {
+  if (vampActive) { stopVamp(); return; }
+  if (progression.length === 0) return;
+  const btn = document.getElementById('vamp-btn');
+  btn.textContent = '…';
+  const octave = parseInt(document.getElementById('oct-sel').value);
+  const chordNotes = await Promise.all(progression.map(async item => {
+    try {
+      const r = await post('voicings', { name: item.name, octave });
+      return r[voicing] ?? r.close ?? [];
+    } catch {
+      return [];
+    }
+  }));
+  vampActive = true;
+  btn.textContent = '■ Stop';
+  const secPerChord = 1.25; // two beats per chord at ~96 BPM
+  const chips = [...document.querySelectorAll('#prog-chips .chip')];
+  chordNotes.forEach((notes, i) => {
+    synthChord(notes, i * secPerChord, secPerChord * 1.5, 0.9);
+    vampTimers.push(setTimeout(() => {
+      chips.forEach(c => c.classList.remove('playing'));
+      chips[i]?.classList.add('playing');
+    }, i * secPerChord * 1000));
+  });
+  vampTimers.push(setTimeout(stopVamp, chordNotes.length * secPerChord * 1000 + 400));
+}
+
+function stopVamp() {
+  vampActive = false;
+  for (const t of vampTimers) clearTimeout(t);
+  vampTimers = [];
+  stopAllSynth();
+  document.querySelectorAll('#prog-chips .chip.playing').forEach(c => c.classList.remove('playing'));
+  const btn = document.getElementById('vamp-btn');
+  btn.textContent = '▶ Play';
+  btn.disabled = progression.length === 0;
+}
+
 // ── Engine status ───────────────────────────────────────────────────────────
 
 function setOnline(on) {
@@ -858,7 +960,14 @@ function renderGrid() {
       <span class="c-degs">${degs.join('·') || '—'}</span>
       <div class="c-bar"><div class="c-fill" style="width:${Math.round(cons*100)}%"></div></div>
     `;
-    btn.addEventListener('click', () => select(i));
+    btn.addEventListener('click', () => {
+      select(i);
+      const c = chords[i];
+      if (c) synthChord(
+        stackPcs(c.pitch_classes, parseInt(document.getElementById('oct-sel').value)),
+        0, 1.0, 0.8,
+      );
+    });
     grid.appendChild(btn);
   });
 }
@@ -982,7 +1091,10 @@ async function playChord() {
 
   const out = getMidiOut();
   if (!out) {
-    showMidiNote('No MIDI output selected');
+    // No MIDI port — use the built-in synth instead
+    synthChord(notes, 0, 1.2, 0.9);
+    showMidiNote(chord.name + ' → ' + notes.join('  '));
+    setTimeout(hideMidiNote, 1200);
     return;
   }
 
@@ -1127,6 +1239,8 @@ function renderProgression() {
 
   clearBtn.disabled   = progression.length === 0;
   analyzeBtn.disabled = progression.length < 2;
+  if (vampActive) stopVamp();
+  document.getElementById('vamp-btn').disabled = progression.length === 0;
 
   if (progression.length === 0) {
     chips.innerHTML = '<span class="prog-empty">Select a chord below, then click Add</span>';
@@ -1404,6 +1518,7 @@ document.getElementById('clear-btn').addEventListener('click', clearProgression)
 document.getElementById('analyze-btn').addEventListener('click', analyzeProgression);
 document.getElementById('play-btn').addEventListener('click', playChord);
 document.getElementById('vamp-sel').addEventListener('change', e => loadVamp(e.target.value));
+document.getElementById('vamp-btn').addEventListener('click', toggleVamp);
 
 if (isModal) {
   const row = document.getElementById('write-clip-row');

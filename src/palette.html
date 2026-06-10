@@ -47,6 +47,63 @@
     let useSevenths = false;
     let currentScale = DATA.defaultScale;
 
+    // ── Built-in synth preview (WebAudio) ────────────────────────────────
+    let _ac = null, _bus = null;
+    function audioCtx() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!_ac) _ac = new AC();
+      if (_ac.state === 'suspended') _ac.resume();
+      return _ac;
+    }
+    function synthBus() {
+      const ac = audioCtx();
+      if (!ac) return null;
+      if (!_bus) {
+        _bus = ac.createGain();
+        const lp = ac.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.4;
+        _bus.connect(lp); lp.connect(ac.destination);
+      }
+      return _bus;
+    }
+    function synthChord(midiNotes, durSec = 1.1, velocity = 0.85) {
+      const bus = synthBus();
+      if (!bus || midiNotes.length === 0) return;
+      const t0 = _ac.currentTime;
+      const peak = 0.22 * velocity / Math.sqrt(Math.max(1, midiNotes.length));
+      for (const m of midiNotes) {
+        const osc = _ac.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = 440 * Math.pow(2, (m - 69) / 12);
+        const g = _ac.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+        g.gain.exponentialRampToValueAtTime(peak * 0.5, t0 + 0.3);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + durSec);
+        osc.connect(g); g.connect(bus);
+        osc.start(t0); osc.stop(t0 + durSec + 0.05);
+      }
+    }
+    function stackPcs(pcs, octave) {
+      const base = (octave + 1) * 12;
+      const out = [];
+      let prev = -Infinity;
+      for (const pc of pcs ?? []) {
+        let p = base + (pc % 12);
+        while (p <= prev) p += 12;
+        out.push(p); prev = p;
+      }
+      return out;
+    }
+    function previewSelected() {
+      if (selectedIndex === null) return;
+      const chord = currentChords()[selectedIndex];
+      if (!chord) return;
+      const octave = parseInt(document.getElementById('octave-select').value);
+      synthChord(stackPcs(chord.pitch_classes, octave));
+    }
+
     function currentChords() {
       const scaleData = DATA.scales[currentScale];
       return (useSevenths ? scaleData?.sevenths : scaleData?.triads) ?? [];
@@ -81,6 +138,7 @@
       selectedIndex = i;
       renderChords();
       document.getElementById('insert-btn').disabled = false;
+      previewSelected();
     }
 
     function setTab(sevenths) {
@@ -136,6 +194,7 @@
       });
 
       document.getElementById('cancel-btn').addEventListener('click', () => closeWithResult(null));
+      document.getElementById('octave-select').addEventListener('change', previewSelected);
       document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWithResult(null); });
     });
   </script>
